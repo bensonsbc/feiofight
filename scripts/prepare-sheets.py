@@ -67,6 +67,12 @@ for row in range(7):
         w = 125 if (row==5 and col==2) else 145 if (row==5 and col==3) else vw[col]
         add('veio-sheet.png',[vx[col],vy[row],w,vb[row]-vy[row]+1],1024,1536,vb[row]-vy[row],False,f"veio/{NAMES[row]}/{col}")
 add('veio-sheet.png',[650,1150,128,115],1024,1536,114,False,"veio/skull")
+cx=[120,330,530,780]; cy=[78,292,518,724,930,1128,1325]; cb=[284,510,714,920,1124,1320,1520]; cw=[205,210,250,205]
+for row in range(7):
+    for col in range(4):
+        w = 160 if (row==5 and col==2) else 145 if (row==5 and col==3) else cw[col]
+        add('catlaca-sheet.png',[cx[col],cy[row],w,cb[row]-cy[row]+1],1024,1536,cb[row]-cy[row],False,f"catlaca/{NAMES[row]}/{col}")
+add('catlaca-sheet.png',[895,1148,125,140],1024,1536,139,False,"catlaca/bats")
 
 LEG_ZONE = 0.58  # trapped background whose top lies below this fraction of the sprite height is removed
 
@@ -141,6 +147,12 @@ def process(sheet, src_dir, out_dir, preview_dir):
         for i in range(W * H):
             if rem[i]:
                 alpha[(box[1] + i // W) * im.width + box[0] + i % W] = 0
+    # The long ABAIXAR label overlaps Catlaca's first crop, but sits well left
+    # of the fighter. Remove the stray letters without touching his silhouette.
+    if sheet == 'catlaca-sheet.png':
+        for y in range(575, 625):
+            for x in range(120, 157):
+                alpha[y * im.width + x] = 0
     # Flatten transparent pixels to one colour so they cost nothing in the palette, then quantize.
     pix = im.load(); bg = border_median(list(im.getdata()), im.width, im.height)
     for i, a in enumerate(alpha):
@@ -177,9 +189,12 @@ def main():
     ap.add_argument('--src', default='public/assets')
     ap.add_argument('--out', default='public/assets')
     ap.add_argument('--preview', default=None)
+    ap.add_argument('--sheet', default=None, help='Process only one sheet from the source folder')
     args = ap.parse_args()
     errors = 0
-    for sheet in sorted({s[0] for s in SPECS}):
+    sheets = [args.sheet] if args.sheet else sorted({s[0] for s in SPECS})
+    for sheet in sheets:
+        if not any(s[0] == sheet for s in SPECS): ap.error(f'unknown sheet: {sheet}')
         errors += process(sheet, args.src, args.out, args.preview)
     sys.exit(1 if errors else 0)
 

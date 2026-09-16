@@ -1,6 +1,6 @@
 import type {Metadata} from "next";
 import "./globals.css";
-export const metadata:Metadata={title:"Luta de Feio — Marica, Hiro, Lobão, Ratão, Bale e Véio",description:"Escolha seu lutador, convide um amigo e entre na arena. Lutas online com espectadores.",icons:{icon:"/favicon.svg",shortcut:"/favicon.svg"}};
+export const metadata:Metadata={title:"Luta de Feio — Marica, Hiro, Lobão, Ratão, Bale, Véio e Catlaca",description:"Escolha seu lutador, convide um amigo e entre na arena. Lutas online com espectadores.",icons:{icon:"/favicon.svg",shortcut:"/favicon.svg"}};
 export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="pt-BR"><body>{children}</body></html>}
 
 

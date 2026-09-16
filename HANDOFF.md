@@ -2,12 +2,12 @@
 
 ## 1. Ponto de partida
 
-Esta entrega contém o código-fonte e os recursos da quinta versão publicada de **Luta de Feio**, um jogo de luta 2D em pixel art para navegador. A equipe pode executar, testar, modificar e versionar esta pasta em seu próprio ambiente.
+Esta entrega contém o código-fonte e os recursos da sexta versão de **Luta de Feio**, um jogo de luta 2D em pixel art para navegador. A equipe pode executar, testar, modificar e versionar esta pasta em seu próprio ambiente.
 
 - **Jogo publicado:** https://luta-de-feio.alexandrebensonsmith.chatgpt.site/
-- **Revisão de origem:** `07d5858dcb32d68b63ef9393dec23a169df47e3f`.
-- **Versão publicada na entrega:** 5.
-- **Estado do código:** cópia dos 129 arquivos versionados dessa revisão, acrescida deste handoff e dos registros de entrega. O código de execução não foi alterado para empacotar a entrega.
+- **Revisão de origem:** o commit `HEAD` do repositório que acompanha esta pasta; o pacote externo registra o SHA completo em `ENTREGA.json`.
+- **Versão publicada no Sites:** 6.
+- **Estado do código:** cópia dos arquivos versionados desta revisão, incluindo este handoff. O código de execução não foi alterado para empacotar a entrega.
 - **Estado do produto:** protótipo jogável. Não é uma implementação de netcode competitivo nem uma operação validada para grande volume de usuários.
 
 A pasta não depende dos caminhos pessoais da máquina em que o jogo foi criado. O checkout original e o site publicado foram preservados. Este pacote não publica alterações automaticamente.
@@ -22,7 +22,7 @@ Não estão incluídos `node_modules`, resultados de build, caches, banco local,
 
 | Área | Comportamento atual |
 | --- | --- |
-| Personagens | Marica, Hiro, Lobão, Ratão, Bale e Véio; cada jogador escolhe um personagem, sem duplicidade na sala |
+| Personagens | Marica, Hiro, Lobão, Ratão, Bale, Véio e Catlaca; cada jogador escolhe um personagem, sem duplicidade na sala |
 | Partida | Dois jogadores, 99 segundos por round, vence quem conquista dois rounds |
 | Empate | Não concede vitória; inicia outro round, podendo ultrapassar três rounds |
 | Ações | Andar, pular, abaixar, soco, chute, defesa e especial |
@@ -32,6 +32,7 @@ Não estão incluídos `node_modules`, resultados de build, caches, banco local,
 | Especial do Ratão | Bicicleta Voadora: bicicleta giratória arremessada contra o oponente |
 | Especial do Bale | Turma dos Sete: sete pequenos guerreiros de conto de fadas avançam em grupo |
 | Especial do Véio | Arroto Radioativo: nuvem tóxica verde em forma de caveira |
+| Especial do Catlaca | Ataque de Morcegos: enxame escuro com brilho roxo |
 | Salas | Código de oito caracteres; validade de quatro horas |
 | Espectadores | Limite configurado de 20; recebem o estado da luta sem controlar jogadores |
 | Treino | Um lutador controlável e um alvo parado; não há IA adversária |
@@ -177,7 +178,7 @@ Erros de ocupação retornam 409; sessão inválida, 401; ação não permitida,
 
 ## 6. Regras iniciais de combate
 
-Os seis personagens compartilham os mesmos números de combate; a diferenciação atual é principalmente visual.
+Os sete personagens compartilham os mesmos números de combate; a diferenciação atual é principalmente visual.
 
 | Parâmetro | Valor atual |
 | --- | --- |
@@ -212,6 +213,8 @@ Bale é desenhado a 78% da escala visual dos demais lutadores, com sombra e limi
 
 O Véio tem retrato individual e folha de 28 quadros. Seu especial mostra o lutador segurando o estômago, soltando vapor verde e lançando uma nuvem radioativa em forma de caveira. O projétil é recortado da terceira célula da linha ESPECIAL, recebe brilho verde no Canvas e usa os mesmos 60 de energia / 23 de dano-base. A geração precisou de uma correção dirigida para manter a nuvem final inteira dentro da folha; os prompts e a decisão de integração estão em `docs/veio-art.md`.
 
+O Catlaca tem retrato individual e folha de 28 quadros. Seu especial lança um grupo de morcegos recortado da quarta célula, com brilho roxo. A folha original está em `art/source/catlaca-sheet.png` e a versão transparente usada pelo jogo está em `public/assets/catlaca-sheet.png`. O processamento também remove um trecho do rótulo ABAIXAR que invadia o primeiro quadro. Os prompts e detalhes estão em `docs/catlaca-art.md`.
+
 ## 8. Testes e evidências
 
 Com a instalação concluída:
@@ -233,9 +236,9 @@ node tests/rooms.test.mjs
 ### O que foi validado nesta atualização
 
 - Simulação: alcance de golpes, redução de dano na defesa, esquiva abaixada, chute, salto e aterrissagem, energia/especial, rounds, revanche e pausa.
-- API local nesta atualização: disputa concorrente pela segunda vaga, espectador, autorização por papel, transmissão de comandos e snapshots, isolamento de tokens, substituição do rival, encerramento e Véio nos dois lugares.
+- API local nesta atualização: consulta do lobby por código, disputa concorrente pela segunda vaga, espectador, autorização por papel, transmissão de comandos e snapshots, isolamento de tokens, substituição do rival, encerramento e Catlaca nos dois lugares.
 - TypeScript e build passaram.
-- Na primeira versão, três sessões de navegador na prévia local conectaram dois jogadores e um espectador por conexão direta. Nesta atualização foram verificados o Véio na seleção e na arena, o Arroto Radioativo no treino, sua escolha online, a rejeição de escolha duplicada/inválida e espectadores recebendo a dupla escolhida.
+- Na primeira versão, três sessões de navegador na prévia local conectaram dois jogadores e um espectador por conexão direta. Nesta atualização foram verificados o Catlaca na seleção e na arena, o Ataque de Morcegos no treino, sua escolha online, a rejeição de escolha duplicada/inválida e espectadores recebendo a dupla escolhida.
 - A página pública carregou e a publicação foi confirmada.
 
 Não foi realizado teste de carga com 20 espectadores, nem validação exaustiva em redes distintas, navegadores diferentes, dispositivos móveis ou cenários de perda de pacotes. O teste HTTP não valida sozinho a execução real do WebRTC. O pacote exportado possui verificação de integridade separada em `ENTREGA.json` e `SHA256SUMS.txt`.
@@ -300,9 +303,9 @@ Para migrar para hospedagem independente, adaptar a integração de build, o pro
 4. Decidir a arquitetura de rede pretendida e o próximo conjunto de melhorias.
 5. Estabelecer um repositório/branch de trabalho e acesso autorizado à hospedagem antes da primeira publicação da equipe.
 
-## 11. Alterações feitas nesta pasta após a entrega (16/09/2026)
+## 11. Alterações da quinta para a sexta versão (16/09/2026)
 
-As mudanças abaixo foram aplicadas sobre a cópia exportada da versão 5 e **não estão publicadas**. Os arquivos alterados não conferem mais com `SHA256SUMS.txt` e `ENTREGA.json`, que continuam descrevendo a exportação original.
+As mudanças abaixo foram aplicadas sobre a versão 5. O pacote externo atualizado registra os arquivos e checksums desta sexta versão. A publicação paralela na Cloudflare é independente da publicação no Sites.
 
 | Arquivo | Mudança |
 | --- | --- |
@@ -310,14 +313,15 @@ As mudanças abaixo foram aplicadas sobre a cópia exportada da versão 5 e **n�
 | `lib/network.ts` | O criador refaz a oferta WebRTC para conexões falhas ou paradas por 12 s, até três vezes por participante. |
 | `app/api/room/route.ts` | Limite de 20 espectadores aplicado dentro do `INSERT`, por contagem de `slot IS NULL`, sem janela de concorrência. Nova operação `peek` para o lobby de convidados. |
 | `app/page.tsx` (lobby do convidado) | Com um código válido, a página consulta a sala e mostra o criador fixo à esquerda, o convidado à direita, o personagem do criador bloqueado na seleção e o botão de entrar desativado quando o rival já sentou. Antes o convidado via a tela como se fosse o primeiro a escolher. |
-| `scripts/prepare-sheets.py` | Novo. Decide o fundo de cada um dos 172 recortes fora do jogo e grava como transparência PNG. Corrige três problemas do recorte antigo: o pixel do canto usado como referência mantinha o fundo inteiro em três quadros de defesa do Ratão; o fundo preso entre as pernas ficava cinza no Ratão, Bale e Véio; a limpeza por faixa comia a barra da camisa clara da Marica na defesa. |
+| `scripts/prepare-sheets.py` | Decide o fundo de cada recorte fora do jogo e grava como transparência PNG. Corrige três problemas do recorte antigo: o pixel do canto usado como referência mantinha o fundo inteiro em três quadros de defesa do Ratão; o fundo preso entre as pernas ficava cinza no Ratão, Bale e Véio; a limpeza por faixa comia a barra da camisa clara da Marica na defesa. Aceita `--sheet` para processar só a nova folha. |
 | `lib/render.ts` | `cut()` apenas recorta e apaga a sombra do chão. Removida toda a heurística de cor e os parâmetros `clearLegGap`, `minBackground` e `sampleBackground`. |
 | `public/assets/*-sheet.png`, `marica-defense.png` | Regeradas pela ferramenta a partir das folhas RGB originais: 255 cores mais índice transparente. |
 | `public/assets/arena.png` | Redimensionada para 960 × 540, o tamanho em que é desenhada, e quantizada com dithering. |
+| `lib/characters.ts`, `lib/render.ts`, `art/source/`, `public/assets/catlaca*` | Catlaca, suas sete ações e o especial de morcegos; folha com transparência preparada fora do jogo. |
 
 ### Publicação paralela na Cloudflare (16/09/2026)
 
-Além do Sites, esta versão foi publicada na conta Cloudflare do proprietário, plano Workers Free, como Worker `luta-de-feio` com banco D1 `luta-de-feio` (id `8a0bbd6e-fec9-4ab5-a4f5-cf4091278552`, migração aplicada). Endereço: https://luta-de-feio.alexandrebenson.workers.dev. O `vite.config.ts` passou a aceitar `D1_DATABASE_NAME` e `D1_DATABASE_ID` por variável de ambiente; sem elas o build continua usando o placeholder do Sites. Fluxo de atualização:
+Além do Sites, a versão anterior foi publicada na conta Cloudflare do proprietário, plano Workers Free, como Worker `luta-de-feio` com banco D1 `luta-de-feio` (id `8a0bbd6e-fec9-4ab5-a4f5-cf4091278552`, migração aplicada). Endereço: https://luta-de-feio.alexandrebenson.workers.dev. A publicação da sexta versão nesse endereço deve ser conferida separadamente. O `vite.config.ts` passou a aceitar `D1_DATABASE_NAME` e `D1_DATABASE_ID` por variável de ambiente; sem elas o build continua usando o placeholder do Sites. Fluxo de atualização:
 
 ```sh
 D1_DATABASE_NAME=luta-de-feio D1_DATABASE_ID=8a0bbd6e-fec9-4ab5-a4f5-cf4091278552 npm run build
@@ -330,4 +334,4 @@ No dia da publicação, a operadora do proprietário bloqueava os dois IPs atrib
 
 Os arquivos baixados pela página caíram de cerca de 15 MB para 3,5 MB. Os retratos individuais continuam RGB e não são carregados pelo jogo. As folhas RGB originais permanecem na revisão de origem `07d5858`.
 
-Validação desta rodada: `tests/game.test.ts` passa; `node --check` aceita os arquivos `.ts` editados; a ferramenta confere que o alfa gravado em cada folha é exatamente o pretendido, e os previews das sete folhas foram revisados visualmente. **Não foram executados** `tsc`, `npm run build`, o teste HTTP de salas nem uma partida no navegador, porque a máquina usada não tinha npm. Rode a sequência da seção 8 antes de publicar.
+Validação desta rodada: `tests/game.test.ts`, TypeScript, build e teste HTTP das salas passaram; o alfa da folha do Catlaca foi conferido sem erros, e seu recorte e ataque de morcegos foram revisados no navegador. O teste de salas cobre a consulta de lobby, rejeição de personagem duplicado, Catlaca como criador e espectador recebendo a dupla. O teste HTTP não substitui uma partida entre dispositivos reais.

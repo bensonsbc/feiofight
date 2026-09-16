@@ -1,6 +1,6 @@
 # Luta de Feio
 
-Jogo de luta em navegador com Marica, Hiro, Lobão, Ratão, Bale e Véio. Dois jogadores por sala, até 20 espectadores, melhor de três rounds e modo de treino.
+Jogo de luta em navegador com Marica, Hiro, Lobão, Ratão, Bale, Véio e Catlaca. Dois jogadores por sala, até 20 espectadores, melhor de três rounds e modo de treino.
 
 ## Controles
 
@@ -20,8 +20,8 @@ Validação: node --experimental-strip-types tests/game.test.ts; node tests/room
 
 ## Arte
 
-Personagens e folhas de sprites foram gerados a partir das referências fornecidas pelo usuário. O cenário foi gerado para o jogo. As folhas têm fundo transparente gravado por scripts/prepare-sheets.py (Python 3 com Pillow), que também gera previews de conferência; o renderizador só recorta e posiciona. Os sprites são quadros-base e podem receber mais quadros de transição em versões futuras. Folhas e cenário estão em paleta de 256 cores para reduzir o download; os originais RGB ficaram na revisão de origem.
+Personagens e folhas de sprites foram gerados a partir das referências fornecidas pelo usuário. O cenário foi gerado para o jogo. As folhas têm fundo transparente gravado por scripts/prepare-sheets.py (Python 3 com Pillow), que também gera previews de conferência; o renderizador só recorta e posiciona. Os sprites são quadros-base e podem receber mais quadros de transição em versões futuras. Folhas e cenário estão em paleta de 256 cores para reduzir o download; os originais RGB anteriores ficaram na revisão de origem. O original da folha do Catlaca está em art/source/catlaca-sheet.png e pode ser processado com `python scripts/prepare-sheets.py --sheet catlaca-sheet.png --src art/source --out public/assets`.
 
 ## Personagens
 
-O catálogo está em lib/characters.ts. Marica: Brinde Sísmico; Hiro: Galinha das Sombras; Lobão: Uivo Felpudo, uma onda azul-prateada em forma de cabeça de lobo; Ratão: Bicicleta Voadora, um arremesso giratório de bicicleta; Bale: Turma dos Sete, sete pequenos guerreiros de conto de fadas que avançam em grupo; Véio: Arroto Radioativo, uma nuvem tóxica verde em forma de caveira. Todos têm as sete ações e especiais com o mesmo custo e dano-base. Bale é renderizado em escala menor para representar sua baixa estatura.
+O catálogo está em lib/characters.ts. Marica: Brinde Sísmico; Hiro: Galinha das Sombras; Lobão: Uivo Felpudo, uma onda azul-prateada em forma de cabeça de lobo; Ratão: Bicicleta Voadora, um arremesso giratório de bicicleta; Bale: Turma dos Sete, sete pequenos guerreiros de conto de fadas que avançam em grupo; Véio: Arroto Radioativo, uma nuvem tóxica verde em forma de caveira; Catlaca: Ataque de Morcegos, um enxame que avança contra o rival. Todos têm as sete ações e especiais com o mesmo custo e dano-base. Bale é renderizado em escala menor para representar sua baixa estatura.

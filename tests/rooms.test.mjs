@@ -17,7 +17,7 @@ try{
  console.log('Room checks passed: peek, exclusive second seat, spectators, role authorization, input/state relay, token isolation, replacement and room closure.');
 }finally{for(const s of [guest,viewer,host].filter(Boolean))await fetch(origin+'/api/room',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+s.token},body:JSON.stringify({op:'leave',id:s.id})}).catch(()=>{})}
 
-for(const [hostHero,guestHero] of [['marica','lobao'],['lobao','hiro'],['ratao','marica'],['bale','ratao'],['veio','bale']]){
+for(const [hostHero,guestHero] of [['marica','lobao'],['lobao','hiro'],['ratao','marica'],['bale','ratao'],['veio','bale'],['catlaca','veio']]){
  const h=await request({op:'create',name:'QA roster host',hero:hostHero});let g,v;
  try{
   await request({op:'join',name:'QA duplicate',code:h.code,hero:hostHero},null,409);
@@ -28,4 +28,4 @@ for(const [hostHero,guestHero] of [['marica','lobao'],['lobao','hiro'],['ratao',
   await request({op:'sync',state},h);const seen=await request({op:'sync'},v);assert.deepEqual(seen.state,state);assert.equal(seen.members.find(m=>m.slot===1).hero,guestHero);
  }finally{await request({op:'leave'},h)}
 }
-console.log('Roster checks passed: Lobão, Ratão, Bale and Véio selections, duplicate/invalid selection rejected, spectator sees chosen characters.');
+console.log('Roster checks passed: Lobão, Ratão, Bale, Véio and Catlaca selections, duplicate/invalid selection rejected, spectator sees chosen characters.');
