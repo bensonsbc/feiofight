@@ -41,4 +41,9 @@ console.log('Roster checks passed: Lobão, Ratão, Bale, Véio and Catlaca selec
   const d=await request({op:'join',name:'QA default star',code:h.code},null,409);assert.ok(d.error,'second seat already taken');
  }finally{await request({op:'leave'},h)}
 }
-console.log('Rock star room checks passed: roster reported by peek, other roster rejected, rock star rival admitted.');
+{
+ // The boss can host a room; it is a rock star room like any other.
+ const h=await request({op:'create',name:'QA boss host',hero:'rogerio-skylab'});
+ try{const peek=await request({op:'peek',code:h.code});assert.equal(peek.roster,'rockstar');assert.equal(peek.hostHero,'rogerio-skylab');await request({op:'join',name:'QA turma',code:h.code,hero:'hiro'},null,409)}finally{await request({op:'leave'},h)}
+}
+console.log('Rock star room checks passed: roster reported by peek, other roster rejected, rock star rival admitted, boss hosts a rock star room.');

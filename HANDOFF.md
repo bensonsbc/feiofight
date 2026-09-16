@@ -349,13 +349,14 @@ Vencer dois rounds avança para a próxima etapa; perder permite repetir a mesma
 
 ## 13. Elencos e o grupo Rock Star (16/09/2026)
 
-O catálogo em `lib/characters.ts` passou a ter **elencos**: `turma` (os sete originais) e `rockstar` (Jim Morrison, John Lennon, Kurt Cobain, Ozzy Osbourne, Lemmy Kilmister, Elvis Presley, Sid Vicious, Keith Richards, Robert Smith e Joey Ramone). Os identificadores são únicos entre elencos e `rosterOf(hero)` devolve o elenco de qualquer lutador.
+O catálogo em `lib/characters.ts` passou a ter **elencos**: `turma` (os sete originais) e `rockstar` (Jim Morrison, John Lennon, Kurt Cobain, Ozzy Osbourne, Lemmy Kilmister, Elvis Presley, Sid Vicious, Keith Richards, Robert Smith, Joey Ramone e o chefe Rogério Skylab). Os identificadores são únicos entre elencos e `rosterOf(hero)` devolve o elenco de qualquer lutador.
 
 - **Escolha.** O lobby tem um seletor de elenco e a URL aceita `?elenco=rockstar`; o padrão é a turma. O renderizador carrega só as folhas do elenco escolhido, cerca de 3,5 MB para a turma e 5,4 MB para o rock star.
 - **Salas são exclusivas por elenco.** O elenco de uma sala é o do personagem do criador; não há coluna nova no banco. `join` com lutador de outro elenco devolve 409, `peek` devolve `roster`, e o convite leva `&elenco=` para o convidado abrir já no elenco certo.
-- **Arcade** usa a escada do elenco do jogador: seis adversários na turma, nove no rock star.
+- **Arcade** usa a escada do elenco do jogador: seis adversários na turma, dez no rock star, com o chefe por último.
 - **Especiais.** Todos são projéteis com o mesmo custo e dano-base, recortados da folha: lagarto, pétalas, onda sonora, morcego sem cabeça, garrafa (gira), onda sísmica dourada, baixo (gira; o golpe corpo a corpo original virou arremesso por decisão do proprietário), cigarros, lágrimas e anéis psíquicos. O renderizador desenha qualquer projétil do atlas com brilho na cor do personagem.
-- **Chefe.** Rogério Skylab tem retrato e especial definidos mas não tem folha; ficou fora do catálogo até a folha existir.
+- **Chefe.** Rogério Skylab entrou no catálogo quando a folha chegou (`ROSTER_INFO.rockstar.boss`). Ele fecha a ordem do elenco, então é sempre a última luta do arcade, e `levelFor(stage, boss)` lhe dá um nível acima da etapa máxima: reação de 0,10 s e quase sempre defende, esquiva e usa o especial. Ele também pode ser escolhido no lobby e em salas online, marcado como CHEFE; se o jogador o escolhe no arcade, a escada é o resto do elenco. O especial é o Arremesso de Dildo, um projétil como os demais.
+- **Cenário por elenco.** `ROSTER_INFO[roster].arena` diz qual fundo o renderizador carrega: a ETE Lauro Gomes para a turma e a fachada do CBGB para o rock star (`public/assets/rockstar/arena.png`, 960 × 540 em paleta com dithering; original RGB em `art/source/rockstar/cbgb-arena.png`). A legenda abaixo da arena e a tela de campeão ("REI DO ROCK!") também vêm de `ROSTER_INFO`.
 
 ### Ferramenta de medição de folhas
 

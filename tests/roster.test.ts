@@ -1,16 +1,20 @@
 import assert from "node:assert/strict";
-import {CHARACTERS,HEROES,ROSTERS,defaultOpponent,heroesOf,isHero,isRoster,rosterOf} from "../lib/characters.ts";
+import {CHARACTERS,HEROES,ROSTERS,ROSTER_INFO,defaultOpponent,heroesOf,isBoss,isHero,isRoster,rosterOf} from "../lib/characters.ts";
 import {createState,begin,step,emptyInput} from "../lib/game.ts";
+import {existsSync} from "node:fs";
 import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
 {
- assert.equal(ROSTERS.turma.length,7);assert.equal(ROSTERS.rockstar.length,10);
- assert.equal(HEROES.length,17,"every fighter has exactly one roster");
+ assert.equal(ROSTERS.turma.length,7);assert.equal(ROSTERS.rockstar.length,11);
+ assert.equal(HEROES.length,18,"every fighter has exactly one roster");
  assert.equal(new Set(HEROES).size,HEROES.length,"ids are unique across rosters");
  for(const h of HEROES)assert.ok(CHARACTERS[h]?.name&&CHARACTERS[h].special,"catalog entry for "+h);
 }
 {
  assert.ok(isRoster("rockstar")&&isRoster("turma")&&!isRoster("boss"));
- assert.ok(isHero("sid-vicious")&&!isHero("rogerio-skylab"),"the boss is not in the roster yet");
+ assert.ok(isHero("sid-vicious")&&isHero("rogerio-skylab"));
+ assert.ok(isBoss("rogerio-skylab")&&!isBoss("sid-vicious")&&!isBoss("catlaca"),"only the rock star boss is a boss");
+ assert.equal(ROSTERS.rockstar.at(-1),"rogerio-skylab","the boss closes the roster so the arcade ladder ends with him");
+ for(const r of Object.keys(ROSTER_INFO) as (keyof typeof ROSTER_INFO)[])assert.ok(existsSync("public"+ROSTER_INFO[r].arena),"arena image for "+r);
  assert.equal(rosterOf("kurt-cobain"),"rockstar");assert.equal(rosterOf("marica"),"turma");
  assert.equal(defaultOpponent("jim-morrison"),"john-lennon");assert.equal(defaultOpponent("marica"),"hiro");
  for(const h of HEROES)assert.equal(rosterOf(defaultOpponent(h)),rosterOf(h),"opponent from the same roster for "+h);
@@ -33,4 +37,12 @@ import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
  for(let i=0;i<50;i++)step(s,[{...emptyInput(),special:true},emptyInput()]);
  assert.equal(s.fighters[1].hp,77,"Elvis's seismic wave hits for 23");
 }
-console.log("Roster checks passed: two rosters, unique ids, catalog, same-roster opponents, measured atlas and a rock star fight.");
+{
+ // The boss throws too: his special lands from range like any rock star projectile.
+ const s=createState("rogerio-skylab","joey-ramone");begin(s);
+ for(let i=0;i<181;i++)step(s,[emptyInput(),emptyInput()]);
+ s.fighters[0].x=400;s.fighters[1].x=480;s.fighters[0].energy=100;
+ for(let i=0;i<50;i++)step(s,[{...emptyInput(),special:true},emptyInput()]);
+ assert.ok(s.fighters[1].hp<100,"Skylab's throw hits");
+}
+console.log("Roster checks passed: two rosters, unique ids, catalog, same-roster opponents, per-roster arena, boss, measured atlas and a rock star fight.");

@@ -2,16 +2,18 @@
 // the page picks it from the URL (?elenco=rockstar) and the API derives it from the host's hero.
 export const ROSTERS = {
   turma: ["marica", "hiro", "lobao", "ratao", "bale", "veio", "catlaca"],
-  rockstar: ["jim-morrison", "john-lennon", "kurt-cobain", "ozzy-osbourne", "lemmy-kilmister", "elvis-presley", "sid-vicious", "keith-richards", "robert-smith", "joey-ramone"],
+  rockstar: ["jim-morrison", "john-lennon", "kurt-cobain", "ozzy-osbourne", "lemmy-kilmister", "elvis-presley", "sid-vicious", "keith-richards", "robert-smith", "joey-ramone", "rogerio-skylab"],
 } as const;
 export type Roster = keyof typeof ROSTERS;
 export type Hero = (typeof ROSTERS)[Roster][number];
 export const DEFAULT_ROSTER: Roster = "turma";
 export const HEROES: readonly Hero[] = [...ROSTERS.turma, ...ROSTERS.rockstar];
 
-export const ROSTER_INFO: Record<Roster, { name: string; caption: string; edition: string }> = {
-  turma: { name: "Turma do Feio", caption: "ETE LAURO GOMES", edition: "VOL. 01" },
-  rockstar: { name: "Rock Star", caption: "PALCO DO ROCK", edition: "VOL. 02 · ROCK STAR" },
+// `arena` is the background the renderer loads for the roster; `boss` is the roster's final arcade
+// opponent (always last in the roster order) and fights with the strongest AI level.
+export const ROSTER_INFO: Record<Roster, { name: string; caption: string; edition: string; arena: string; champion: string; boss?: Hero }> = {
+  turma: { name: "Turma do Feio", caption: "ETE LAURO GOMES", edition: "VOL. 01", arena: "/assets/arena.png", champion: "CAMPEÃO DA TURMA!" },
+  rockstar: { name: "Rock Star", caption: "CBGB", edition: "VOL. 02 · ROCK STAR", arena: "/assets/rockstar/arena.png", champion: "REI DO ROCK!", boss: "rogerio-skylab" },
 };
 
 export const CHARACTERS: Record<Hero, { name: string; number: string; special: string; description: string; color: string }> = {
@@ -32,6 +34,7 @@ export const CHARACTERS: Record<Hero, { name: string; number: string; special: s
   "keith-richards": { name: "KEITH RICHARDS", number: "08", special: "Chuva de Cigarros", description: "Arremessa um maço; cigarros caem sobre o adversário.", color: "#f3e3b0" },
   "robert-smith": { name: "ROBERT SMITH", number: "09", special: "Choro da Morte", description: "Lágrimas azuis luminosas atingem o adversário.", color: "#79c6ff" },
   "joey-ramone": { name: "JOEY RAMONE", number: "10", special: "Ondas de Telepatia", description: "Anéis psíquicos magenta avançam até o adversário.", color: "#ff7ae0" },
+  "rogerio-skylab": { name: "ROGÉRIO SKYLAB", number: "CHEFE", special: "Arremesso de Dildo", description: "O chefe do CBGB arremessa um dildo rosa que cruza a arena.", color: "#ff7ad9" },
 };
 
 export function isRoster(value: unknown): value is Roster {
@@ -48,6 +51,11 @@ export function heroesOf(roster: Roster): readonly Hero[] {
 
 export function rosterOf(hero: Hero): Roster {
   return (ROSTERS.rockstar as readonly string[]).includes(hero) ? "rockstar" : "turma";
+}
+
+/** The roster boss: last opponent of the arcade ladder, with the strongest AI. */
+export function isBoss(hero: Hero): boolean {
+  return ROSTER_INFO[rosterOf(hero)].boss === hero;
 }
 
 /** First fighter of the same roster that is not `hero`. */

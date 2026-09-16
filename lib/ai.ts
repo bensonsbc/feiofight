@@ -1,11 +1,11 @@
 import {emptyInput,type Input,type State} from "./game.ts";
-import {heroesOf,rosterOf,type Hero} from "./characters.ts";
+import {heroesOf,isBoss,rosterOf,type Hero} from "./characters.ts";
 
-/** Opponents a solo player must beat: the rest of their roster, in catalog order. */
+/** Opponents a solo player must beat: the rest of their roster, in catalog order (the boss comes last). */
 export function ladder(hero:Hero):Hero[]{return heroesOf(rosterOf(hero)).filter(h=>h!==hero)}
 
-/** Stage n → reaction time and odds. Later stages react faster, block more and use specials more. */
-export function levelFor(stage:number){const l=Math.max(0,Math.min(5,stage));return {reaction:.34-.04*l,block:.25+.11*l,special:.35+.1*l,aggression:.5+.08*l,dodge:.2+.12*l}}
+/** Stage n → reaction time and odds. Later stages react faster, block more and use specials more; the boss goes one level beyond the top stage. */
+export function levelFor(stage:number,boss=false){const l=boss?6:Math.max(0,Math.min(5,stage));return {reaction:.34-.04*l,block:.25+.11*l,special:.35+.1*l,aggression:.5+.08*l,dodge:.2+.12*l}}
 
 export type Brain={rng:()=>number;plan:Input;until:number};
 
@@ -20,7 +20,7 @@ export function think(s:State,i:number,b:Brain,dt:number,stage:number):Input{
  const me=s.fighters[i],foe=s.fighters[1-i];
  if(s.phase!=="fight"){b.plan=emptyInput();b.until=0;return b.plan}
  b.until-=dt;if(b.until>0)return b.plan;
- const L=levelFor(stage),r=b.rng,dist=Math.abs(foe.x-me.x),toward=foe.x>me.x?1:-1,plan=emptyInput();
+ const L=levelFor(stage,isBoss(me.hero)),r=b.rng,dist=Math.abs(foe.x-me.x),toward=foe.x>me.x?1:-1,plan=emptyInput();
  const forward=()=>{if(toward>0)plan.right=true;else plan.left=true},back=()=>{if(toward>0)plan.left=true;else plan.right=true};
  b.until=L.reaction*(.7+.6*r());
  const incoming=s.projectiles.some(p=>p.owner!==i&&Math.sign(me.x-p.x)===p.dir&&Math.abs(p.x-me.x)<300);

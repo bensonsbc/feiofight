@@ -1,5 +1,5 @@
 import type {Action,State,Fighter} from "./game";
-import {CHARACTERS,isHero,type Roster} from "./characters";
+import {CHARACTERS,ROSTER_INFO,isHero,type Roster} from "./characters";
 import rockstarAtlas from "../art/source/rockstar/atlas.json";
 type Sprite={canvas:HTMLCanvasElement;anchor:number;base:number;scale:number};
 type Atlas=Record<string,Record<string,Sprite[]>>;
@@ -17,7 +17,7 @@ function cut(im:HTMLImageElement,rect:number[],refW:number,refH:number,standing:
 export class Renderer{
  atlas:Atlas={};bg!:HTMLImageElement;chicken!:Sprite;wolf!:Sprite;bike!:Sprite;miners!:Sprite;miner!:Sprite;skull!:Sprite;bats!:Sprite;fx:Record<string,Fx>={};ready=false;roster:Roster="turma";
  /** Loads the arena plus the sheets of one roster; a second call swaps rosters. */
- async load(roster:Roster="turma"){this.ready=false;this.roster=roster;this.atlas={};this.fx={};this.bg=await image("/assets/arena.png");if(roster==="rockstar")await this.loadRockstar();else await this.loadTurma();this.ready=true}
+ async load(roster:Roster="turma"){this.ready=false;this.roster=roster;this.atlas={};this.fx={};this.bg=await image(ROSTER_INFO[roster].arena);if(roster==="rockstar")await this.loadRockstar();else await this.loadTurma();this.ready=true}
  private async loadTurma(){const [hiro,marica,defense,lobao,ratao,bale,veio,catlaca]=await Promise.all([image("/assets/hiro-sheet.png"),image("/assets/marica-sheet.png"),image("/assets/marica-defense.png"),image("/assets/lobao-sheet.png"),image("/assets/ratao-sheet.png"),image("/assets/bale-sheet.png"),image("/assets/veio-sheet.png"),image("/assets/catlaca-sheet.png")]);this.atlas={hiro:{},marica:{},lobao:{},ratao:{},bale:{},veio:{},catlaca:{}};
   const names=["walk","jump","crouch","kick","punch","special","block"];
   const hx=[135,333,530,775],hy=[45,256,477,682,890,1080,1290],hb=[248,457,660,874,1071,1268,1485];

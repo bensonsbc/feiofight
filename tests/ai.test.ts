@@ -4,11 +4,13 @@ import {createBrain,think,ladder,levelFor} from "../lib/ai.ts";
 {
  assert.deepEqual(ladder("marica"),["hiro","lobao","ratao","bale","veio","catlaca"],"ladder follows the catalog and skips the player");
  assert.equal(ladder("catlaca").length,6);assert.ok(!ladder("catlaca").includes("catlaca"));
- assert.deepEqual(ladder("elvis-presley"),["jim-morrison","john-lennon","kurt-cobain","ozzy-osbourne","lemmy-kilmister","sid-vicious","keith-richards","robert-smith","joey-ramone"],"rock star ladder stays inside its roster");
+ assert.deepEqual(ladder("elvis-presley"),["jim-morrison","john-lennon","kurt-cobain","ozzy-osbourne","lemmy-kilmister","sid-vicious","keith-richards","robert-smith","joey-ramone","rogerio-skylab"],"rock star ladder stays inside its roster and ends with the boss");
+ assert.equal(ladder("rogerio-skylab").length,10);assert.ok(!ladder("rogerio-skylab").includes("rogerio-skylab"));
 }
 {
  assert.ok(levelFor(5).reaction<levelFor(0).reaction,"later stages react faster");
  assert.ok(levelFor(5).block>levelFor(0).block,"later stages block more");
+ assert.ok(levelFor(9,true).reaction<levelFor(9).reaction&&levelFor(9,true).block>levelFor(9).block,"the boss is harder than the top stage");
 }
 {
  const s=createState("hiro","veio");begin(s);const b=createBrain(7);
