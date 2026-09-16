@@ -51,4 +51,11 @@ function advance(s:ReturnType<typeof ready>,a=emptyInput(),b=emptyInput(),n=25){
  assert.ok(s.fighters[1].energy<60,"Bale's group special consumes energy");
  rematch(s);assert.deepEqual(s.fighters.map(f=>f.hero),["marica","bale"],"rematch keeps Bale");
 }
-console.log("Combat checks passed: range, block, crouch, kick, jump, specials, rounds, rematch, pause, Lobão, Ratão and Bale.");
+{
+ const s=createState("veio","bale");begin(s);advance(s,emptyInput(),emptyInput(),181);s.fighters[0].x=400;s.fighters[1].x=480;s.fighters[0].energy=100;
+ advance(s,{...emptyInput(),special:true},emptyInput(),50);
+ assert.equal(s.fighters[1].hp,77,"Véio's radioactive burp special damages the opponent");
+ assert.ok(s.fighters[0].energy<60,"Véio's special consumes energy");
+ rematch(s);assert.deepEqual(s.fighters.map(f=>f.hero),["veio","bale"],"rematch keeps Véio");
+}
+console.log("Combat checks passed: range, block, crouch, kick, jump, specials, rounds, rematch, pause, Lobão, Ratão, Bale and Véio.");

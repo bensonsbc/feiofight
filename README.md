@@ -1,6 +1,6 @@
 # Luta de Feio
 
-Jogo de luta em navegador com Marica, Hiro, Lobão, Ratão e Bale. Dois jogadores por sala, até 20 espectadores, melhor de três rounds e modo de treino.
+Jogo de luta em navegador com Marica, Hiro, Lobão, Ratão, Bale e Véio. Dois jogadores por sala, até 20 espectadores, melhor de três rounds e modo de treino.
 
 ## Controles
 
@@ -24,4 +24,4 @@ Personagens e folhas de sprites foram gerados a partir das referências fornecid
 
 ## Personagens
 
-O catálogo está em lib/characters.ts. Marica: Brinde Sísmico; Hiro: Galinha das Sombras; Lobão: Uivo Felpudo, uma onda azul-prateada em forma de cabeça de lobo; Ratão: Bicicleta Voadora, um arremesso giratório de bicicleta; Bale: Turma dos Sete, sete pequenos guerreiros de conto de fadas que avançam em grupo. Todos têm as sete ações e especiais com o mesmo custo e dano-base. Bale é renderizado em escala menor para representar sua baixa estatura.
+O catálogo está em lib/characters.ts. Marica: Brinde Sísmico; Hiro: Galinha das Sombras; Lobão: Uivo Felpudo, uma onda azul-prateada em forma de cabeça de lobo; Ratão: Bicicleta Voadora, um arremesso giratório de bicicleta; Bale: Turma dos Sete, sete pequenos guerreiros de conto de fadas que avançam em grupo; Véio: Arroto Radioativo, uma nuvem tóxica verde em forma de caveira. Todos têm as sete ações e especiais com o mesmo custo e dano-base. Bale é renderizado em escala menor para representar sua baixa estatura.
