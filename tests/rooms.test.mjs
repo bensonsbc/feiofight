@@ -29,3 +29,16 @@ for(const [hostHero,guestHero] of [['marica','lobao'],['lobao','hiro'],['ratao',
  }finally{await request({op:'leave'},h)}
 }
 console.log('Roster checks passed: Lobão, Ratão, Bale, Véio and Catlaca selections, duplicate/invalid selection rejected, spectator sees chosen characters.');
+
+{
+ // A rock star room only admits rock stars; the lobby lookup reports the roster.
+ const h=await request({op:'create',name:'QA rock host',hero:'elvis-presley'});let g;
+ try{
+  const peek=await request({op:'peek',code:h.code});assert.equal(peek.roster,'rockstar');assert.equal(peek.hostHero,'elvis-presley');
+  await request({op:'join',name:'QA wrong roster',code:h.code,hero:'marica'},null,409);
+  await request({op:'join',name:'QA duplicate star',code:h.code,hero:'elvis-presley'},null,409);
+  g=await request({op:'join',name:'QA rock rival',code:h.code,hero:'sid-vicious'});assert.equal(g.hero,'sid-vicious');assert.equal(g.hostHero,'elvis-presley');
+  const d=await request({op:'join',name:'QA default star',code:h.code},null,409);assert.ok(d.error,'second seat already taken');
+ }finally{await request({op:'leave'},h)}
+}
+console.log('Rock star room checks passed: roster reported by peek, other roster rejected, rock star rival admitted.');

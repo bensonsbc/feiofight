@@ -1,6 +1,11 @@
-import type {Action,Hero,State,Fighter} from "./game";
+import type {Action,State,Fighter} from "./game";
+import {CHARACTERS,isHero,type Roster} from "./characters";
+import rockstarAtlas from "../art/source/rockstar/atlas.json";
 type Sprite={canvas:HTMLCanvasElement;anchor:number;base:number;scale:number};
-type Atlas=Record<Hero,Record<string,Sprite[]>>;
+type Atlas=Record<string,Record<string,Sprite[]>>;
+type Fx={sprite:Sprite;spin:boolean;color:string};
+// One entry per fighter, written by scripts/measure-sheets.py: crops are [x, y, w, h, anchor, baseline].
+type AtlasEntry={sheet:string;ref:number[];standing:number;frames:Record<string,number[][]>;projectile:number[];spin:boolean};
 const image=(src:string)=>new Promise<HTMLImageElement>((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src});
 function cut(im:HTMLImageElement,rect:number[],refW:number,refH:number,standing:number,anchor:number,baseline:number):Sprite{
  const sx=im.naturalWidth/refW,sy=im.naturalHeight/refH;const [x,y,w,h]=rect;const c=document.createElement("canvas");c.width=Math.round(w*sx);c.height=Math.round(h*sy);const g=c.getContext("2d")!;g.drawImage(im,x*sx,y*sy,w*sx,h*sy,0,0,c.width,c.height);
@@ -10,8 +15,10 @@ function cut(im:HTMLImageElement,rect:number[],refW:number,refH:number,standing:
  return {canvas:c,anchor:anchor*sx,base:baseline*sy,scale:176/(standing*sy)};
 }
 export class Renderer{
- atlas!:Atlas;bg!:HTMLImageElement;chicken!:Sprite;wolf!:Sprite;bike!:Sprite;miners!:Sprite;miner!:Sprite;skull!:Sprite;bats!:Sprite;ready=false;
- async load(){const [hiro,marica,defense,lobao,ratao,bale,veio,catlaca,bg]=await Promise.all([image("/assets/hiro-sheet.png"),image("/assets/marica-sheet.png"),image("/assets/marica-defense.png"),image("/assets/lobao-sheet.png"),image("/assets/ratao-sheet.png"),image("/assets/bale-sheet.png"),image("/assets/veio-sheet.png"),image("/assets/catlaca-sheet.png"),image("/assets/arena.png")]);this.bg=bg;this.atlas={hiro:{},marica:{},lobao:{},ratao:{},bale:{},veio:{},catlaca:{}};
+ atlas:Atlas={};bg!:HTMLImageElement;chicken!:Sprite;wolf!:Sprite;bike!:Sprite;miners!:Sprite;miner!:Sprite;skull!:Sprite;bats!:Sprite;fx:Record<string,Fx>={};ready=false;roster:Roster="turma";
+ /** Loads the arena plus the sheets of one roster; a second call swaps rosters. */
+ async load(roster:Roster="turma"){this.ready=false;this.roster=roster;this.atlas={};this.fx={};this.bg=await image("/assets/arena.png");if(roster==="rockstar")await this.loadRockstar();else await this.loadTurma();this.ready=true}
+ private async loadTurma(){const [hiro,marica,defense,lobao,ratao,bale,veio,catlaca]=await Promise.all([image("/assets/hiro-sheet.png"),image("/assets/marica-sheet.png"),image("/assets/marica-defense.png"),image("/assets/lobao-sheet.png"),image("/assets/ratao-sheet.png"),image("/assets/bale-sheet.png"),image("/assets/veio-sheet.png"),image("/assets/catlaca-sheet.png")]);this.atlas={hiro:{},marica:{},lobao:{},ratao:{},bale:{},veio:{},catlaca:{}};
   const names=["walk","jump","crouch","kick","punch","special","block"];
   const hx=[135,333,530,775],hy=[45,256,477,682,890,1080,1290],hb=[248,457,660,874,1071,1268,1485];
   for(let row=0;row<7;row++)this.atlas.hiro[names[row]]=[0,1,2,3].map(col=>{const x=hx[col],w=col===3?245:row===5&&col===2?245:col===2?245:200;return cut(hiro,[x,hy[row],w,hb[row]-hy[row]+1],1024,1536,177,col===3?76:110,hb[row]-hy[row])});
@@ -36,12 +43,19 @@ export class Renderer{
   for(let row=0;row<7;row++)this.atlas.catlaca[names[row]]=[0,1,2,3].map(col=>cut(catlaca,[cx[col],cy[row],row===5&&col===2?160:row===5&&col===3?145:cw[col],cb[row]-cy[row]+1],1024,1536,185,ca[col],cb[row]-cy[row]));
   this.bats=cut(catlaca,[895,1148,125,140],1024,1536,140,62,139);
   this.wolf=cut(lobao,[922,1124,96,92],1024,1536,92,48,91);
-  this.chicken=cut(hiro,[661,1100,112,154],1024,1536,160,55,153);this.ready=true;
+  this.chicken=cut(hiro,[661,1100,112,154],1024,1536,160,55,153);
  }
- sprite(f:Fighter,s:State){let key:Action=f.action;let frame=0;if(key==="walk")frame=Math.floor(f.steps*9)%4;else if(key==="jump")frame=f.vy>100?1:2;else if(key==="crouch")frame=2;else if(key==="block")frame=f.flash>0?2:1;else if(["punch","kick","special"].includes(key)){const length=key==="punch"?.36:key==="kick"?.58:.95;frame=Math.min(3,Math.floor(f.time/length*4))}else{key="crouch";frame=0}if(s.phase==="over"&&f.hp===0)frame=2;return this.atlas[f.hero][key][frame]}
+ /** Rosters measured by scripts/measure-sheets.py need no hand-written table: the atlas drives everything. */
+ private async loadRockstar(){const entries=Object.entries(rockstarAtlas as Record<string,AtlasEntry>);const sheets=await Promise.all(entries.map(([,a])=>image("/assets/rockstar/"+a.sheet)));
+  entries.forEach(([hero,a],i)=>{const im=sheets[i],[rw,rh]=a.ref;this.atlas[hero]={};for(const [action,frames] of Object.entries(a.frames))this.atlas[hero][action]=frames.map(([x,y,w,h,anchor,baseline])=>cut(im,[x,y,w,h],rw,rh,a.standing,anchor,baseline));
+   const [x,y,w,h,anchor,baseline]=a.projectile;this.fx[hero]={sprite:cut(im,[x,y,w,h],rw,rh,h,anchor,baseline),spin:a.spin,color:isHero(hero)?CHARACTERS[hero].color:"#ffffff"}});
+ }
+ sprite(f:Fighter,s:State){const set=this.atlas[f.hero];if(!set)return null;let key:Action=f.action;let frame=0;if(key==="walk")frame=Math.floor(f.steps*9)%4;else if(key==="jump")frame=f.vy>100?1:2;else if(key==="crouch")frame=2;else if(key==="block")frame=f.flash>0?2:1;else if(["punch","kick","special"].includes(key)){const length=key==="punch"?.36:key==="kick"?.58:.95;frame=Math.min(3,Math.floor(f.time/length*4))}else{key="crouch";frame=0}if(s.phase==="over"&&f.hp===0)frame=2;return set[key]?.[frame]??null}
  draw(ctx:CanvasRenderingContext2D,s:State,time:number){const W=960,H=540;ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,W,H);if(this.bg){ctx.drawImage(this.bg,0,0,W,H);ctx.fillStyle="rgba(3,7,19,.13)";ctx.fillRect(0,0,W,H)}if(!this.ready)return;
-  for(const f of s.fighters){ctx.save();const size=f.hero==="bale"?.78:1;ctx.fillStyle="rgba(0,0,0,.45)";ctx.beginPath();ctx.ellipse(f.x,485,49*size,9*size,0,0,Math.PI*2);ctx.fill();const sp=this.sprite(f,s),breathe=f.action==="idle"?Math.sin(time*3)*1.3:0;ctx.translate(f.x,485-f.y+breathe);ctx.scale(f.face,1);if(f.flash>0)ctx.filter=f.action==="block"?"brightness(1.6)":"brightness(2) sepia(.7)";ctx.drawImage(sp.canvas,-sp.anchor*sp.scale*size,-sp.base*sp.scale*size,sp.canvas.width*sp.scale*size,sp.canvas.height*sp.scale*size);ctx.restore()}
-  for(const p of s.projectiles){ctx.save();ctx.translate(p.x,485-p.y);ctx.scale(p.dir,1);if(p.hero==="hiro"){const sp=this.chicken;ctx.shadowColor="#bb68ff";ctx.shadowBlur=18;ctx.drawImage(sp.canvas,-32,-45,76,98)}else if(p.hero==="lobao"){ctx.shadowColor="#9cdbff";ctx.shadowBlur=18;ctx.drawImage(this.wolf.canvas,-40,-46,104,100)}else if(p.hero==="ratao"){ctx.rotate(time*10*p.dir);ctx.shadowColor="#ff9c70";ctx.shadowBlur=14;ctx.drawImage(this.bike.canvas,-58,-52,116,104)}else if(p.hero==="bale"){ctx.shadowColor="#8ff0a4";ctx.shadowBlur=12;ctx.drawImage(this.miners.canvas,-88,-45,176,106);ctx.drawImage(this.miner.canvas,75,-38,42,84)}else if(p.hero==="veio"){ctx.shadowColor="#62ff55";ctx.shadowBlur=22;ctx.drawImage(this.skull.canvas,-55,-50,110,100)}else if(p.hero==="catlaca"){ctx.shadowColor="#c874ff";ctx.shadowBlur=18;ctx.drawImage(this.bats.canvas,-60,-50,120,100)}else{ctx.shadowColor="#ffcb53";ctx.shadowBlur=18;ctx.strokeStyle="#ffdc6f";ctx.lineWidth=9;ctx.beginPath();ctx.arc(-12,0,39,-1.25,1.25);ctx.stroke();ctx.strokeStyle="#fff3b2";ctx.lineWidth=3;ctx.beginPath();ctx.arc(-7,0,31,-1.15,1.15);ctx.stroke()}ctx.restore()}
+  for(const f of s.fighters){const sp=this.sprite(f,s);if(!sp)continue;ctx.save();const size=f.hero==="bale"?.78:1;ctx.fillStyle="rgba(0,0,0,.45)";ctx.beginPath();ctx.ellipse(f.x,485,49*size,9*size,0,0,Math.PI*2);ctx.fill();const breathe=f.action==="idle"?Math.sin(time*3)*1.3:0;ctx.translate(f.x,485-f.y+breathe);ctx.scale(f.face,1);if(f.flash>0)ctx.filter=f.action==="block"?"brightness(1.6)":"brightness(2) sepia(.7)";ctx.drawImage(sp.canvas,-sp.anchor*sp.scale*size,-sp.base*sp.scale*size,sp.canvas.width*sp.scale*size,sp.canvas.height*sp.scale*size);ctx.restore()}
+  for(const p of s.projectiles){ctx.save();ctx.translate(p.x,485-p.y);ctx.scale(p.dir,1);const fx=this.fx[p.hero];
+   if(fx){const c=fx.sprite.canvas,k=Math.min(120/c.width,104/c.height),w=c.width*k,h=c.height*k;if(fx.spin)ctx.rotate(time*10*p.dir);ctx.shadowColor=fx.color;ctx.shadowBlur=18;ctx.drawImage(c,-w/2,-h/2,w,h)}
+   else if(p.hero==="hiro"){const sp=this.chicken;ctx.shadowColor="#bb68ff";ctx.shadowBlur=18;ctx.drawImage(sp.canvas,-32,-45,76,98)}else if(p.hero==="lobao"){ctx.shadowColor="#9cdbff";ctx.shadowBlur=18;ctx.drawImage(this.wolf.canvas,-40,-46,104,100)}else if(p.hero==="ratao"){ctx.rotate(time*10*p.dir);ctx.shadowColor="#ff9c70";ctx.shadowBlur=14;ctx.drawImage(this.bike.canvas,-58,-52,116,104)}else if(p.hero==="bale"){ctx.shadowColor="#8ff0a4";ctx.shadowBlur=12;ctx.drawImage(this.miners.canvas,-88,-45,176,106);ctx.drawImage(this.miner.canvas,75,-38,42,84)}else if(p.hero==="veio"){ctx.shadowColor="#62ff55";ctx.shadowBlur=22;ctx.drawImage(this.skull.canvas,-55,-50,110,100)}else if(p.hero==="catlaca"){ctx.shadowColor="#c874ff";ctx.shadowBlur=18;ctx.drawImage(this.bats.canvas,-60,-50,120,100)}else{ctx.shadowColor="#ffcb53";ctx.shadowBlur=18;ctx.strokeStyle="#ffdc6f";ctx.lineWidth=9;ctx.beginPath();ctx.arc(-12,0,39,-1.25,1.25);ctx.stroke();ctx.strokeStyle="#fff3b2";ctx.lineWidth=3;ctx.beginPath();ctx.arc(-7,0,31,-1.15,1.15);ctx.stroke()}ctx.restore()}
   if(s.hitFx){const fx=s.hitFx;ctx.save();ctx.translate(fx.x,485-fx.y);ctx.strokeStyle=fx.block?"#91e0ff":"#ffdc73";ctx.lineWidth=4;for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(Math.cos(a)*8,Math.sin(a)*8);ctx.lineTo(Math.cos(a)*27,Math.sin(a)*27);ctx.stroke()}ctx.restore()}
  }
 }

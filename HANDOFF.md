@@ -347,7 +347,25 @@ O botão **MODO ARCADE · VENÇA TODOS** no lobby inicia uma sequência local co
 
 Vencer dois rounds avança para a próxima etapa; perder permite repetir a mesma etapa; vencer as seis mostra a tela de campeão. A barra lateral lista os adversários com o estado de cada um. A partida pausa se a aba ficar em segundo plano, como no treino. O gerador de números é determinístico por semente, o que permite testes reproduzíveis em `tests/ai.test.ts`; no jogo a semente vem do relógio.
 
-## 13. Cenário da sétima versão (16/09/2026)
+## 13. Elencos e o grupo Rock Star (16/09/2026)
+
+O catálogo em `lib/characters.ts` passou a ter **elencos**: `turma` (os sete originais) e `rockstar` (Jim Morrison, John Lennon, Kurt Cobain, Ozzy Osbourne, Lemmy Kilmister, Elvis Presley, Sid Vicious, Keith Richards, Robert Smith e Joey Ramone). Os identificadores são únicos entre elencos e `rosterOf(hero)` devolve o elenco de qualquer lutador.
+
+- **Escolha.** O lobby tem um seletor de elenco e a URL aceita `?elenco=rockstar`; o padrão é a turma. O renderizador carrega só as folhas do elenco escolhido, cerca de 3,5 MB para a turma e 5,4 MB para o rock star.
+- **Salas são exclusivas por elenco.** O elenco de uma sala é o do personagem do criador; não há coluna nova no banco. `join` com lutador de outro elenco devolve 409, `peek` devolve `roster`, e o convite leva `&elenco=` para o convidado abrir já no elenco certo.
+- **Arcade** usa a escada do elenco do jogador: seis adversários na turma, nove no rock star.
+- **Especiais.** Todos são projéteis com o mesmo custo e dano-base, recortados da folha: lagarto, pétalas, onda sonora, morcego sem cabeça, garrafa (gira), onda sísmica dourada, baixo (gira; o golpe corpo a corpo original virou arremesso por decisão do proprietário), cigarros, lágrimas e anéis psíquicos. O renderizador desenha qualquer projétil do atlas com brilho na cor do personagem.
+- **Chefe.** Rogério Skylab tem retrato e especial definidos mas não tem folha; ficou fora do catálogo até a folha existir.
+
+### Ferramenta de medição de folhas
+
+`scripts/measure-sheets.py` detecta as figuras de uma folha no layout padrão (título, sete linhas rotuladas, quatro quadros por linha, fundo cinza) e escreve `atlas.json` com o recorte, a âncora dos pés, a altura de referência e o projétil de cada lutador. Ela separa as linhas pelos rótulos da esquerda, corta entre linhas na varredura mais vazia, ignora as sombras cinza que ligariam figuras vizinhas, divide componentes que um efeito uniu, e atribui cada efeito destacado da linha ESPECIAL ao lutador à sua esquerda. `OVERRIDES` no topo do script cobre o que a detecção não sabe: o projétil do Elvis, que encosta nos pés, e o baixo do Sid, que nunca se solta da mão. A opção `--preview` desenha recortes, âncoras e projétil sobre a folha para revisão.
+
+Fluxo para uma folha nova no padrão: colocar o PNG em `art/source/<elenco>/`, rodar a medição com preview, revisar, rodar `scripts/prepare-sheets.py --atlas ... --src art/source/<elenco> --out public/assets/<elenco>` e acrescentar o lutador ao catálogo. `lib/render.ts` lê o atlas e não precisa de tabela escrita à mão; a turma original continua com as tabelas manuais.
+
+Validação: `tests/roster.test.ts` confere os dois elencos, identificadores únicos, catálogo completo, oponente padrão do mesmo elenco, atlas com 7 × 4 quadros e projétil para cada rock star, e uma luta de rock stars com o dano-base do especial. O teste de salas cobre a recusa de lutador de outro elenco.
+
+## 14. Cenário da sétima versão (16/09/2026)
 
 O plano de fundo da arena foi trocado por uma interpretação em pixel art da fotografia da entrada da ETE Lauro Gomes fornecida pelo proprietário. O arquivo ativo é `public/assets/arena.png`. A arte anterior, da esquina, continua disponível em `public/assets/arena-esquina-original.png`, preservada byte a byte a partir da sexta versão. A legenda abaixo da arena foi atualizada em `app/page.tsx`. O renderizador continua carregando `arena.png`; nenhuma regra de combate, posição dos lutadores ou colisão depende do conteúdo da imagem. Para restaurar o cenário anterior, substitua `arena.png` pela cópia, atualize a legenda e publique uma nova versão.
 

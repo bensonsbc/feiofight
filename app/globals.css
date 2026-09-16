@@ -13,3 +13,6 @@
 
 /* Arcade ladder in the sidebar. */
 .member.current strong{color:var(--primary)}.member.beaten{opacity:.6}.member.beaten .player-tag{color:#aeea78;border-color:#aeea78}
+
+/* Roster switch and the larger rock star grid. */
+.roster-switch{display:flex;gap:6px;margin:0 0 12px}.roster-switch button{flex:1;background:#151e2b;color:#c1cbda;border:1px solid var(--border);padding:9px 6px;font:700 11px Consolas,monospace;letter-spacing:1px}.roster-switch button.selected{border-color:var(--primary);color:var(--primary)}.roster-switch button:disabled{opacity:.6;cursor:default;text-decoration:none}.hero-options.many button{font-size:11px;padding:9px 6px;letter-spacing:0}

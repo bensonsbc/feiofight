@@ -1,0 +1,19 @@
+{
+  "group": "rockstar",
+  "status": "concept-art-not-integrated-boss-sheet-pending",
+  "portraitSize": [1024, 1536],
+  "background": "deep-navy",
+  "fighters": [
+    {"id":"jim-morrison","name":"Jim Morrison","portrait":"jim-morrison.png","spriteSheet":"jim-morrison-sheet.png","special":"Ataque dos Lagartos"},
+    {"id":"john-lennon","name":"John Lennon","portrait":"john-lennon.png","spriteSheet":"john-lennon-sheet.png","special":"Chuva de Pétalas"},
+    {"id":"kurt-cobain","name":"Kurt Cobain","portrait":"kurt-cobain.png","spriteSheet":"kurt-cobain-sheet.png","special":"Onda Sonora do Riff"},
+    {"id":"ozzy-osbourne","name":"Ozzy Osbourne","portrait":"ozzy-osbourne.png","spriteSheet":"ozzy-osbourne-sheet.png","special":"Morcego Sem Cabeça"},
+    {"id":"lemmy-kilmister","name":"Lemmy Kilmister","portrait":"lemmy-kilmister.png","spriteSheet":"lemmy-kilmister-sheet.png","special":"Garrafa de Whiskey"},
+    {"id":"elvis-presley","name":"Elvis Presley","portrait":"elvis-presley.png","spriteSheet":"elvis-presley-sheet.png","special":"Terremoto do Rebolado"},
+    {"id":"sid-vicious","name":"Sid Vicious","portrait":"sid-vicious.png","spriteSheet":"sid-vicious-sheet.png","special":"Baixo na Cabeça"},
+    {"id":"keith-richards","name":"Keith Richards","portrait":"keith-richards.png","spriteSheet":"keith-richards-sheet.png","special":"Chuva de Cigarros"},
+    {"id":"robert-smith","name":"Robert Smith","portrait":"robert-smith.png","spriteSheet":"robert-smith-sheet.png","special":"Choro da Morte"},
+    {"id":"joey-ramone","name":"Joey Ramone","portrait":"joey-ramone.png","spriteSheet":"joey-ramone-sheet.png","special":"Ondas de Telepatia (Psycho Therapy)"},
+    {"id":"rogerio-skylab","name":"Rogério Skylab","role":"boss","portrait":"rogerio-skylab.png","spriteSheet":null,"special":"Arremesso de Dildo"}
+  ]
+}

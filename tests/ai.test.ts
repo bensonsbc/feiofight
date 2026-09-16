@@ -4,6 +4,7 @@ import {createBrain,think,ladder,levelFor} from "../lib/ai.ts";
 {
  assert.deepEqual(ladder("marica"),["hiro","lobao","ratao","bale","veio","catlaca"],"ladder follows the catalog and skips the player");
  assert.equal(ladder("catlaca").length,6);assert.ok(!ladder("catlaca").includes("catlaca"));
+ assert.deepEqual(ladder("elvis-presley"),["jim-morrison","john-lennon","kurt-cobain","ozzy-osbourne","lemmy-kilmister","sid-vicious","keith-richards","robert-smith","joey-ramone"],"rock star ladder stays inside its roster");
 }
 {
  assert.ok(levelFor(5).reaction<levelFor(0).reaction,"later stages react faster");

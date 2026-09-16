@@ -1,5 +1,5 @@
 import {env} from "cloudflare:workers";
-import { CHARACTERS, defaultOpponent, isHero } from "../../../lib/characters";
+import { CHARACTERS, ROSTER_INFO, defaultOpponent, isHero, rosterOf } from "../../../lib/characters";
 
 const json=(body:unknown,status=200)=>Response.json(body,{status,headers:{"Cache-Control":"no-store"}});
 type Row={id:string;room:string;secret:string;name:string;slot:number|null;hero:string;seen:number;input:string|null;offer:string|null;answer:string|null};
@@ -33,6 +33,8 @@ export async function POST(req:Request){
    const hostHero=isHero(host.hero)?host.hero:"marica";
    const assigned=slot===null?null:isHero(b.hero)?b.hero:defaultOpponent(hostHero);
    if(assigned===hostHero)return json({error:CHARACTERS[hostHero].name+" já está na sala. Escolha outro personagem."},409);
+   // A room belongs to one roster: the host's hero decides it and the rival must come from the same one.
+   if(assigned&&rosterOf(assigned)!==rosterOf(hostHero))return json({error:"Esta sala é do elenco "+ROSTER_INFO[rosterOf(hostHero)].name+". Escolha um lutador desse elenco."},409);
    // The spectator cap is enforced inside the INSERT so concurrent joins cannot exceed it.
    // The rival seat needs no count: the unique (room, slot) index already makes it exclusive.
    try{
@@ -50,7 +52,8 @@ export async function POST(req:Request){
    const list=await db.prepare("SELECT id,name,slot,hero FROM members WHERE room=? AND seen>? ORDER BY slot").bind(code,now-30000).all<Row>();
    const host=list.results.find(m=>m.id===room.host),rival=list.results.find(m=>m.slot===1);
    if(!host)return json({error:"O criador da sala está desconectado."},409);
-   return json({code,hostName:host.name,hostHero:isHero(host.hero)?host.hero:"marica",rivalName:rival?.name??null,rivalHero:rival&&isHero(rival.hero)?rival.hero:null,spectators:list.results.filter(m=>m.slot===null).length});
+   const hostHero=isHero(host.hero)?host.hero:"marica";
+   return json({code,hostName:host.name,hostHero,roster:rosterOf(hostHero),rivalName:rival?.name??null,rivalHero:rival&&isHero(rival.hero)?rival.hero:null,spectators:list.results.filter(m=>m.slot===null).length});
   }
   const id=String(b.id||""),token=String(req.headers.get("authorization")||"").replace(/^Bearer /,"");
   if(!token)return json({error:"Sessão inválida. Entre novamente."},401);

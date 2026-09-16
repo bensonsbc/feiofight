@@ -75,6 +75,7 @@ for row in range(7):
 add('catlaca-sheet.png',[895,1148,125,140],1024,1536,139,False,"catlaca/bats")
 
 LEG_ZONE = 0.58  # trapped background whose top lies below this fraction of the sprite height is removed
+ERASE = {}       # sheet -> [x, y, w, h] rectangles to make transparent (label leftovers from a measured atlas)
 
 
 def crop_box(im, rect, refW, refH):
@@ -153,6 +154,11 @@ def process(sheet, src_dir, out_dir, preview_dir):
         for y in range(575, 625):
             for x in range(120, 157):
                 alpha[y * im.width + x] = 0
+    # Label leftovers found by scripts/measure-sheets.py (letters spilling past the label column).
+    for ex, ey, ew, eh in ERASE.get(sheet, []):
+        for y in range(ey, ey + eh):
+            for x in range(ex, ex + ew):
+                alpha[y * im.width + x] = 0
     # Flatten transparent pixels to one colour so they cost nothing in the palette, then quantize.
     pix = im.load(); bg = border_median(list(im.getdata()), im.width, im.height)
     for i, a in enumerate(alpha):
@@ -184,13 +190,30 @@ def process(sheet, src_dir, out_dir, preview_dir):
     return bad
 
 
+def load_atlas(path):
+    """Rosters measured by scripts/measure-sheets.py: one JSON atlas gives every crop and the projectile."""
+    import json
+    with open(path, encoding='utf-8') as f: atlas = json.load(f)
+    SPECS.clear(); ERASE.clear()
+    for hero, a in atlas.items():
+        W, H = a['ref']
+        for action, crops in a['frames'].items():
+            for k, (x, y, w, h, anchor, baseline) in enumerate(crops):
+                add(a['sheet'], [x, y, w, h], W, H, baseline, False, f"{hero}/{action}/{k}")
+        x, y, w, h, anchor, baseline = a['projectile']
+        add(a['sheet'], [x, y, w, h], W, H, baseline, False, f"{hero}/projectile")
+        ERASE.setdefault(a['sheet'], []).extend(a.get('erase', []))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--src', default='public/assets')
     ap.add_argument('--out', default='public/assets')
     ap.add_argument('--preview', default=None)
     ap.add_argument('--sheet', default=None, help='Process only one sheet from the source folder')
+    ap.add_argument('--atlas', default=None, help='Use the crops of a measured atlas JSON instead of the built-in table')
     args = ap.parse_args()
+    if args.atlas: load_atlas(args.atlas)
     errors = 0
     sheets = [args.sheet] if args.sheet else sorted({s[0] for s in SPECS})
     for sheet in sheets:

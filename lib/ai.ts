@@ -1,10 +1,10 @@
 import {emptyInput,type Input,type State} from "./game.ts";
-import {HEROES,type Hero} from "./characters.ts";
+import {heroesOf,rosterOf,type Hero} from "./characters.ts";
 
-/** Opponents a solo player must beat, in catalog order, skipping their own fighter. */
-export function ladder(hero:Hero):Hero[]{return HEROES.filter(h=>h!==hero)}
+/** Opponents a solo player must beat: the rest of their roster, in catalog order. */
+export function ladder(hero:Hero):Hero[]{return heroesOf(rosterOf(hero)).filter(h=>h!==hero)}
 
-/** Stage 0..5 → reaction time and odds. Later stages react faster, block more and use specials more. */
+/** Stage n → reaction time and odds. Later stages react faster, block more and use specials more. */
 export function levelFor(stage:number){const l=Math.max(0,Math.min(5,stage));return {reaction:.34-.04*l,block:.25+.11*l,special:.35+.1*l,aggression:.5+.08*l,dodge:.2+.12*l}}
 
 export type Brain={rng:()=>number;plan:Input;until:number};

@@ -16,11 +16,15 @@ As salas expiram após quatro horas e são encerradas quando o criador sai. Cada
 
 Projeto Vinext / React / Cloudflare Workers, D1. Instalar com npm run install:ci e abrir com npm run dev. Migrações em drizzle/. A hospedagem é gerenciada pelo Sites com o projeto identificado em .openai/hosting.json.
 
-Validação: node --experimental-strip-types tests/game.test.ts; node --experimental-strip-types tests/ai.test.ts; node tests/rooms.test.mjs; npx tsc --noEmit; npm run build. O teste de salas aceita uma origem como argumento e remove as salas que cria.
+Validação: node --experimental-strip-types tests/game.test.ts; node --experimental-strip-types tests/ai.test.ts; node --experimental-strip-types tests/roster.test.ts; node tests/rooms.test.mjs; npx tsc --noEmit; npm run build. O teste de salas aceita uma origem como argumento e remove as salas que cria.
 
 ## Arte
 
 Personagens e folhas de sprites foram gerados a partir das referências fornecidas pelo usuário. O cenário atual, inspirado na entrada da ETE Lauro Gomes, está em `public/assets/arena.png`; o cenário anterior, da esquina, foi preservado em `public/assets/arena-esquina-original.png`. Para voltar ao cenário anterior, copie esse arquivo sobre `arena.png` e faça uma nova publicação. As folhas têm fundo transparente gravado por scripts/prepare-sheets.py (Python 3 com Pillow), que também gera previews de conferência; o renderizador só recorta e posiciona. Os sprites são quadros-base e podem receber mais quadros de transição em versões futuras. As folhas existentes estão em paleta de 256 cores para reduzir o download; os originais RGB anteriores ficaram na revisão de origem. O original da folha do Catlaca está em art/source/catlaca-sheet.png e pode ser processado com `python scripts/prepare-sheets.py --sheet catlaca-sheet.png --src art/source --out public/assets`.
+
+## Elencos
+
+O jogo tem dois elencos, definidos em lib/characters.ts. A Turma do Feio é o padrão. O elenco Rock Star, com Jim Morrison, John Lennon, Kurt Cobain, Ozzy Osbourne, Lemmy Kilmister, Elvis Presley, Sid Vicious, Keith Richards, Robert Smith e Joey Ramone, é escolhido no lobby ou pela URL com `?elenco=rockstar`. Uma sala pertence a um único elenco, decidido pelo personagem do criador; o convite já leva o parâmetro e o convidado só vê lutadores desse elenco. O modo arcade enfrenta os outros nove do elenco escolhido. As folhas do Rock Star vêm de `art/source/rockstar/`, são medidas por `scripts/measure-sheets.py`, que gera `atlas.json` com todos os recortes e o projétil de cada um, e recebem transparência por `scripts/prepare-sheets.py --atlas`. Rogério Skylab, o chefe, fica de fora até ter folha de animação.
 
 ## Personagens
 
