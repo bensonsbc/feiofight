@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {CHARACTERS,HEROES,ROSTERS,ROSTER_INFO,defaultOpponent,heroesOf,isBoss,isHero,isRoster,portrait,rosterOf,shotOf,statsOf} from "../lib/characters.ts";
+import {CHARACTERS,HEROES,ROSTERS,ROSTER_INFO,defaultOpponent,heroesOf,isBoss,isHero,isRoster,portrait,rosterOf,shotOf,statsOf,styleOf} from "../lib/characters.ts";
 import {createState,begin,step,emptyInput} from "../lib/game.ts";
 import {existsSync} from "node:fs";
 import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
@@ -7,14 +7,15 @@ import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
  assert.equal(ROSTERS.turma.length,7);assert.equal(ROSTERS.rockstar.length,13);
  assert.equal(HEROES.length,20,"every fighter has exactly one roster");
  assert.equal(new Set(HEROES).size,HEROES.length,"ids are unique across rosters");
- for(const h of HEROES){assert.ok(CHARACTERS[h]?.name&&CHARACTERS[h].special&&CHARACTERS[h].ending,"catalog entry with ending for "+h);const st=statsOf(h),sh=shotOf(h);assert.ok(st.hp>=85&&st.hp<=125&&st.speed>.8&&st.speed<1.3&&st.power>.8&&st.power<1.2,"sane stats for "+h);assert.ok(sh.speed>=280&&sh.speed<=650&&sh.height>=20&&sh.height<=140&&sh.damage>=18&&sh.damage<=32,"sane shot for "+h);assert.ok(existsSync("public"+portrait(h))&&existsSync("public"+portrait(h,true)),"portrait files for "+h)}
+ for(const h of HEROES){assert.ok(CHARACTERS[h]?.name&&CHARACTERS[h].special&&CHARACTERS[h].ending&&CHARACTERS[h].story.length>120,"catalog entry with ending and story for "+h);assert.ok(["PESO-PESADO","VELOZ","EQUILIBRADO"].includes(styleOf(h)),"style label for "+h);const st=statsOf(h),sh=shotOf(h);assert.ok(st.hp>=85&&st.hp<=125&&st.speed>.8&&st.speed<1.3&&st.power>.8&&st.power<1.2,"sane stats for "+h);assert.ok(sh.speed>=280&&sh.speed<=650&&sh.height>=20&&sh.height<=140&&sh.damage>=18&&sh.damage<=32,"sane shot for "+h);assert.ok(existsSync("public"+portrait(h))&&existsSync("public"+portrait(h,true)),"portrait files for "+h)}
 }
 {
  assert.ok(isRoster("rockstar")&&isRoster("turma")&&!isRoster("boss"));
  assert.ok(isHero("sid-vicious")&&isHero("rogerio-skylab")&&isHero("iggy-pop")&&isHero("sergey"));
  assert.ok(isBoss("rogerio-skylab")&&!isBoss("sid-vicious")&&!isBoss("catlaca"),"only the rock star boss is a boss");
  assert.equal(ROSTERS.rockstar.at(-1),"rogerio-skylab","the boss closes the roster so the arcade ladder ends with him");
- for(const r of Object.keys(ROSTER_INFO) as (keyof typeof ROSTER_INFO)[])assert.ok(existsSync("public"+ROSTER_INFO[r].arena),"arena image for "+r);
+ for(const r of Object.keys(ROSTER_INFO) as (keyof typeof ROSTER_INFO)[]){assert.ok(existsSync("public"+ROSTER_INFO[r].arena),"arena image for "+r);assert.equal(ROSTER_INFO[r].brand.length,2);assert.ok(ROSTER_INFO[r].title)}
+ assert.equal(ROSTER_INFO.rockstar.title,"Clube da Luta do Rock");
  assert.equal(rosterOf("kurt-cobain"),"rockstar");assert.equal(rosterOf("marica"),"turma");
  assert.equal(defaultOpponent("jim-morrison"),"john-lennon");assert.equal(defaultOpponent("marica"),"hiro");
  for(const h of HEROES)assert.equal(rosterOf(defaultOpponent(h)),rosterOf(h),"opponent from the same roster for "+h);

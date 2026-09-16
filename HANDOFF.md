@@ -397,6 +397,7 @@ Todas as sugestões da revisão de produto foram implementadas de uma vez, excet
 
 - **Som sintetizado** (`lib/audio.ts`): nenhum arquivo de áudio; cada evento vira um efeito curto de osciladores e ruído filtrado, e a derrota tem um gemido (dente de serra com vibrato por um filtro passa-banda). A **música** é um loop de quatro compassos (baixo, bumbo, chimbal e um solo) com padrão e andamento próprios por elenco, agendada com antecedência para não engasgar. Liga no botão SOM, que também exige o gesto do usuário que o navegador pede para áudio.
 - **Sombra** que encolhe e clareia com a altura do pulo; **altura** por lutador (Sergey 1,05, Bale 0,78).
+- **Ficha do lutador.** Clicar num personagem no lobby mostra o retrato, o estilo (`styleOf`: peso-pesado, veloz ou equilibrado, lido dos atributos), barras de vida, velocidade e força, o especial e uma história curta (`story` no catálogo) que apresenta o personagem, seu jeito de lutar e o golpe.
 - **Retratos** reduzidos por `scripts/make-portraits.py` (320 × 480 e miniaturas 96 × 144, paleta com dithering, cerca de 2,2 MB no total, carregados sob demanda): miniaturas nos botões do lobby, retratos na tela VS, no final e na lista de salas. Os originais de mais de 1 MB continuam em `public/assets` por enquanto, mas nada os carrega.
 
 ### Online
