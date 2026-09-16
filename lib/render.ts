@@ -2,17 +2,12 @@ import type {Action,Hero,State,Fighter} from "./game";
 type Sprite={canvas:HTMLCanvasElement;anchor:number;base:number;scale:number};
 type Atlas=Record<Hero,Record<string,Sprite[]>>;
 const image=(src:string)=>new Promise<HTMLImageElement>((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src});
-function cut(im:HTMLImageElement,rect:number[],refW:number,refH:number,standing:number,anchor:number,baseline:number,clearLegGap=true,minBackground=100,sampleBackground=false):Sprite{
- const sx=im.naturalWidth/refW,sy=im.naturalHeight/refH;const [x,y,w,h]=rect;const c=document.createElement("canvas");c.width=Math.round(w*sx);c.height=Math.round(h*sy);const g=c.getContext("2d",{willReadFrequently:true})!;g.drawImage(im,x*sx,y*sy,w*sx,h*sy,0,0,c.width,c.height);
- const data=g.getImageData(0,0,c.width,c.height),p=data.data,W=c.width,H=c.height;const bg=[p[0],p[1],p[2]],seen=new Uint8Array(W*H),q=new Int32Array(W*H);let head=0,tail=0;
- function add(n:number){if(n<0||n>=W*H||seen[n])return;seen[n]=1;const i=n*4,r=p[i],gg=p[i+1],b=p[i+2];const matches=sampleBackground?Math.max(Math.abs(r-bg[0]),Math.abs(gg-bg[1]),Math.abs(b-bg[2]))<42:Math.max(r,gg,b)-Math.min(r,gg,b)<30&&Math.min(r,gg,b)>minBackground;if(matches){q[tail++]=n;p[i+3]=0}}
- for(let x=0;x<W;x++){add(x);add((H-1)*W+x)}for(let y=0;y<H;y++){add(y*W);add(y*W+W-1)}
- // A painted floor line can enclose the background between the legs.
- if(clearLegGap)for(let y=Math.round(H*.58);y<Math.round(baseline*sy)-8;y++)for(let x=0;x<W;x++)add(y*W+x);
- while(head<tail){const n=q[head++];if(n%W>0)add(n-1);if(n%W<W-1)add(n+1);add(n-W);add(n+W)}
- // Ignore the original ground shadow: the game places its own at a fixed floor.
- for(let y=Math.round(baseline*sy);y<H;y++)for(let x=0;x<W;x++)p[(y*W+x)*4+3]=0;
- g.putImageData(data,0,0);return {canvas:c,anchor:anchor*sx,base:baseline*sy,scale:176/(standing*sy)};
+function cut(im:HTMLImageElement,rect:number[],refW:number,refH:number,standing:number,anchor:number,baseline:number):Sprite{
+ const sx=im.naturalWidth/refW,sy=im.naturalHeight/refH;const [x,y,w,h]=rect;const c=document.createElement("canvas");c.width=Math.round(w*sx);c.height=Math.round(h*sy);const g=c.getContext("2d")!;g.drawImage(im,x*sx,y*sy,w*sx,h*sy,0,0,c.width,c.height);
+ // The sheets already carry a transparent background, baked by scripts/prepare-sheets.py.
+ // Only the painted floor shadow is dropped here: the game draws its own at a fixed floor.
+ g.clearRect(0,Math.round(baseline*sy),c.width,c.height);
+ return {canvas:c,anchor:anchor*sx,base:baseline*sy,scale:176/(standing*sy)};
 }
 export class Renderer{
  atlas!:Atlas;bg!:HTMLImageElement;chicken!:Sprite;wolf!:Sprite;bike!:Sprite;miners!:Sprite;miner!:Sprite;skull!:Sprite;ready=false;
@@ -26,17 +21,17 @@ export class Renderer{
   const lx=[140,334,529,785],ly=[58,279,489,689,896,1086,1293],lb=[264,475,677,883,1077,1288,1493],lw=[194,195,256,239],la=[110,120,121,87];
   for(let row=0;row<7;row++)this.atlas.lobao[names[row]]=[0,1,2,3].map(col=>cut(lobao,[lx[col],ly[row],row===5&&col===2?140:row===5&&col===3?145:lw[col],lb[row]-ly[row]+1],1024,1536,182,la[col],lb[row]-ly[row]));
   const rx=[150,337,528,775],ry=[55,270,476,682,889,1085,1295],rb=[264,473,677,882,1078,1289,1496],rw=[197,200,268,239],ra=[95,96,122,89];
-  for(let row=0;row<7;row++)this.atlas.ratao[names[row]]=[0,1,2,3].map(col=>cut(ratao,[rx[col],ry[row],row===5&&col===2?145:row===5&&col===3?145:rw[col],rb[row]-ry[row]+1],1024,1536,183,ra[col],rb[row]-ry[row],false,100,true));
-  this.bike=cut(ratao,[884,1128,138,126],1024,1536,126,68,125,false,100,true);
+  for(let row=0;row<7;row++)this.atlas.ratao[names[row]]=[0,1,2,3].map(col=>cut(ratao,[rx[col],ry[row],row===5&&col===2?145:row===5&&col===3?145:rw[col],rb[row]-ry[row]+1],1024,1536,183,ra[col],rb[row]-ry[row]));
+  this.bike=cut(ratao,[884,1128,138,126],1024,1536,126,68,125);
   const bx=[150,337,528,775],by=[65,292,523,727,938,1145,1320],bb=[272,506,710,920,1133,1306,1511],bw=[197,200,260,245],ba=[106,96,131,91];
-  for(let row=0;row<7;row++)if(row!==5)this.atlas.bale[names[row]]=[0,1,2,3].map(col=>cut(bale,[bx[col],by[row],bw[col],bb[row]-by[row]+1],1024,1536,171,ba[col],bb[row]-by[row],false,100,true));
-  const baleCall=cut(bale,[120,1145,145,162],1024,1536,171,72,161,false,100,true),baleRecover=cut(bale,[670,1145,115,162],1024,1536,171,58,161,false,100,true);
+  for(let row=0;row<7;row++)if(row!==5)this.atlas.bale[names[row]]=[0,1,2,3].map(col=>cut(bale,[bx[col],by[row],bw[col],bb[row]-by[row]+1],1024,1536,171,ba[col],bb[row]-by[row]));
+  const baleCall=cut(bale,[120,1145,145,162],1024,1536,171,72,161),baleRecover=cut(bale,[670,1145,115,162],1024,1536,171,58,161);
   this.atlas.bale.special=[baleCall,baleCall,baleRecover,baleRecover];
-  this.miners=cut(bale,[778,1158,246,148],1024,1536,148,123,147,false,100,true);
-  this.miner=cut(bale,[610,1158,67,148],1024,1536,148,33,147,false,100,true);
+  this.miners=cut(bale,[778,1158,246,148],1024,1536,148,123,147);
+  this.miner=cut(bale,[610,1158,67,148],1024,1536,148,33,147);
   const vx=[145,345,535,780],vy=[82,290,525,730,935,1140,1324],vb=[274,510,716,923,1136,1316,1520],vw=[195,190,245,210],va=[96,95,120,95];
-  for(let row=0;row<7;row++)this.atlas.veio[names[row]]=[0,1,2,3].map(col=>cut(veio,[vx[col],vy[row],row===5&&col===2?125:row===5&&col===3?145:vw[col],vb[row]-vy[row]+1],1024,1536,184,va[col],vb[row]-vy[row],false,100,true));
-  this.skull=cut(veio,[650,1150,128,115],1024,1536,115,64,114,false,100,true);
+  for(let row=0;row<7;row++)this.atlas.veio[names[row]]=[0,1,2,3].map(col=>cut(veio,[vx[col],vy[row],row===5&&col===2?125:row===5&&col===3?145:vw[col],vb[row]-vy[row]+1],1024,1536,184,va[col],vb[row]-vy[row]));
+  this.skull=cut(veio,[650,1150,128,115],1024,1536,115,64,114);
   this.wolf=cut(lobao,[922,1124,96,92],1024,1536,92,48,91);
   this.chicken=cut(hiro,[661,1100,112,154],1024,1536,160,55,153);this.ready=true;
  }

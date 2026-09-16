@@ -29,14 +29,28 @@ export async function POST(req:Request){
    const host=await db.prepare("SELECT * FROM members WHERE id=? AND seen>?").bind(room.host,now-30000).first<Row>();
    if(!host)return json({error:"O criador da sala está desconectado."},409);
    await db.prepare("DELETE FROM members WHERE room=? AND slot IS NOT 0 AND seen<?").bind(code,now-30000).run();
-   const total=await db.prepare("SELECT COUNT(*) AS n FROM members WHERE room=?").bind(code).first<{n:number}>();
-   if((total?.n||0)>=22)return json({error:"A sala atingiu o limite de 20 espectadores."},409);
    const slot=b.watch===true?null:1;
    const hostHero=isHero(host.hero)?host.hero:"marica";
    const assigned=slot===null?null:isHero(b.hero)?b.hero:defaultOpponent(hostHero);
    if(assigned===hostHero)return json({error:CHARACTERS[hostHero].name+" já está na sala. Escolha outro personagem."},409);
-   try{await db.prepare("INSERT INTO members(id,room,secret,name,slot,hero,seen) VALUES(?,?,?,?,?,?,?)").bind(id,code,secret,name,slot,assigned,now).run()}catch(e){if(String(e).includes("UNIQUE"))return json({error:"Os dois lugares já estão ocupados. Entre para assistir."},409);throw e}
+   // The spectator cap is enforced inside the INSERT so concurrent joins cannot exceed it.
+   // The rival seat needs no count: the unique (room, slot) index already makes it exclusive.
+   try{
+    const insert=slot===null
+     ?await db.prepare("INSERT INTO members(id,room,secret,name,slot,hero,seen) SELECT ?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM members WHERE room=? AND slot IS NULL)<20").bind(id,code,secret,name,slot,assigned,now,code).run()
+     :await db.prepare("INSERT INTO members(id,room,secret,name,slot,hero,seen) VALUES(?,?,?,?,?,?,?)").bind(id,code,secret,name,slot,assigned,now).run();
+    if(!insert.meta.changes)return json({error:"A sala atingiu o limite de 20 espectadores."},409);
+   }catch(e){if(String(e).includes("UNIQUE"))return json({error:"Os dois lugares já estão ocupados. Entre para assistir."},409);throw e}
    return json({code,id,token,slot,hero:assigned,name,host:room.host,hostHero});
+  }
+  // Lobby lookup for an invite: who created the room, which hero they took, whether the rival seat is free.
+  if(op==="peek"){
+   const code=String(b.code||"").toUpperCase();if(!/^[A-Z2-9]{8}$/.test(code))return json({error:"Use o código de 8 caracteres da sala."},400);
+   const room=await db.prepare("SELECT * FROM rooms WHERE code=? AND expires>?").bind(code,now).first<Room>();if(!room)return json({error:"Sala não encontrada ou encerrada."},404);
+   const list=await db.prepare("SELECT id,name,slot,hero FROM members WHERE room=? AND seen>? ORDER BY slot").bind(code,now-30000).all<Row>();
+   const host=list.results.find(m=>m.id===room.host),rival=list.results.find(m=>m.slot===1);
+   if(!host)return json({error:"O criador da sala está desconectado."},409);
+   return json({code,hostName:host.name,hostHero:isHero(host.hero)?host.hero:"marica",rivalName:rival?.name??null,rivalHero:rival&&isHero(rival.hero)?rival.hero:null,spectators:list.results.filter(m=>m.slot===null).length});
   }
   const id=String(b.id||""),token=String(req.headers.get("authorization")||"").replace(/^Bearer /,"");
   if(!token)return json({error:"Sessão inválida. Entre novamente."},401);

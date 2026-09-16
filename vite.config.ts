@@ -9,6 +9,11 @@ const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
 
 const { d1, r2 } = hostingConfig;
 
+// Deploying outside Sites (plain `wrangler deploy`): point the DB binding at a real D1 database.
+// Sites injects its own binding values at publish time, so the placeholder stays the default.
+const d1DatabaseName = process.env.D1_DATABASE_NAME || "site-creator-d1";
+const d1DatabaseId = process.env.D1_DATABASE_ID || SITE_CREATOR_PLACEHOLDER_DATABASE_ID;
+
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
@@ -20,8 +25,8 @@ const localBindingConfig = {
     ? [
         {
           binding: d1,
-          database_name: "site-creator-d1",
-          database_id: SITE_CREATOR_PLACEHOLDER_DATABASE_ID,
+          database_name: d1DatabaseName,
+          database_id: d1DatabaseId,
         },
       ]
     : [],
