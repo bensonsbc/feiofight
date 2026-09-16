@@ -15,10 +15,14 @@ function cut(im:HTMLImageElement,rect:number[],refW:number,refH:number,standing:
  return {canvas:c,anchor:anchor*sx,base:baseline*sy,scale:176/(standing*sy)};
 }
 export class Renderer{
- atlas:Atlas={};bg!:HTMLImageElement;chicken!:Sprite;wolf!:Sprite;bike!:Sprite;miners!:Sprite;miner!:Sprite;skull!:Sprite;bats!:Sprite;fx:Record<string,Fx>={};ready=false;roster:Roster="turma";
- /** Loads the arena plus the sheets of one roster; a second call swaps rosters. */
- async load(roster:Roster="turma"){this.ready=false;this.roster=roster;this.atlas={};this.fx={};this.bg=await image(ROSTER_INFO[roster].arena);if(roster==="rockstar")await this.loadRockstar();else await this.loadTurma();this.ready=true}
- private async loadTurma(){const [hiro,marica,defense,lobao,ratao,bale,veio,catlaca]=await Promise.all([image("/assets/hiro-sheet.png"),image("/assets/marica-sheet.png"),image("/assets/marica-defense.png"),image("/assets/lobao-sheet.png"),image("/assets/ratao-sheet.png"),image("/assets/bale-sheet.png"),image("/assets/veio-sheet.png"),image("/assets/catlaca-sheet.png")]);this.atlas={hiro:{},marica:{},lobao:{},ratao:{},bale:{},veio:{},catlaca:{}};
+ atlas:Atlas={};bg!:HTMLImageElement;chicken!:Sprite;wolf!:Sprite;bike!:Sprite;miners!:Sprite;miner!:Sprite;skull!:Sprite;bats!:Sprite;fx:Record<string,Fx>={};ready=false;roster:Roster="turma";private generation=0;
+ /**
+  * Loads the arena plus the sheets of one roster; a second call swaps rosters. Only the latest
+  * call may touch the renderer: an earlier load still downloading (the default roster at mount,
+  * then the roster from the URL) would otherwise finish last and paint its own arena and sheets.
+  */
+ async load(roster:Roster="turma"){const gen=++this.generation;this.ready=false;this.roster=roster;this.atlas={};this.fx={};const bg=await image(ROSTER_INFO[roster].arena);if(gen!==this.generation)return;this.bg=bg;if(roster==="rockstar")await this.loadRockstar(gen);else await this.loadTurma(gen);if(gen===this.generation)this.ready=true}
+ private async loadTurma(gen:number){const [hiro,marica,defense,lobao,ratao,bale,veio,catlaca]=await Promise.all([image("/assets/hiro-sheet.png"),image("/assets/marica-sheet.png"),image("/assets/marica-defense.png"),image("/assets/lobao-sheet.png"),image("/assets/ratao-sheet.png"),image("/assets/bale-sheet.png"),image("/assets/veio-sheet.png"),image("/assets/catlaca-sheet.png")]);if(gen!==this.generation)return;this.atlas={hiro:{},marica:{},lobao:{},ratao:{},bale:{},veio:{},catlaca:{}};
   const names=["walk","jump","crouch","kick","punch","special","block"];
   const hx=[135,333,530,775],hy=[45,256,477,682,890,1080,1290],hb=[248,457,660,874,1071,1268,1485];
   for(let row=0;row<7;row++)this.atlas.hiro[names[row]]=[0,1,2,3].map(col=>{const x=hx[col],w=col===3?245:row===5&&col===2?245:col===2?245:200;return cut(hiro,[x,hy[row],w,hb[row]-hy[row]+1],1024,1536,177,col===3?76:110,hb[row]-hy[row])});
@@ -46,7 +50,7 @@ export class Renderer{
   this.chicken=cut(hiro,[661,1100,112,154],1024,1536,160,55,153);
  }
  /** Rosters measured by scripts/measure-sheets.py need no hand-written table: the atlas drives everything. */
- private async loadRockstar(){const entries=Object.entries(rockstarAtlas as Record<string,AtlasEntry>);const sheets=await Promise.all(entries.map(([,a])=>image("/assets/rockstar/"+a.sheet)));
+ private async loadRockstar(gen:number){const entries=Object.entries(rockstarAtlas as Record<string,AtlasEntry>);const sheets=await Promise.all(entries.map(([,a])=>image("/assets/rockstar/"+a.sheet)));if(gen!==this.generation)return;
   entries.forEach(([hero,a],i)=>{const im=sheets[i],[rw,rh]=a.ref;this.atlas[hero]={};for(const [action,frames] of Object.entries(a.frames))this.atlas[hero][action]=frames.map(([x,y,w,h,anchor,baseline])=>cut(im,[x,y,w,h],rw,rh,a.standing,anchor,baseline));
    const [x,y,w,h,anchor,baseline]=a.projectile;this.fx[hero]={sprite:cut(im,[x,y,w,h],rw,rh,h,anchor,baseline),spin:a.spin,color:isHero(hero)?CHARACTERS[hero].color:"#ffffff"}});
  }
