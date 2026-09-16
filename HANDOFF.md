@@ -35,7 +35,8 @@ Não estão incluídos `node_modules`, resultados de build, caches, banco local,
 | Especial do Catlaca | Ataque de Morcegos: enxame escuro com brilho roxo |
 | Salas | Código de oito caracteres; validade de quatro horas |
 | Espectadores | Limite configurado de 20; recebem o estado da luta sem controlar jogadores |
-| Treino | Um lutador controlável e um alvo parado; não há IA adversária |
+| Treino | Um lutador controlável e um alvo parado |
+| Arcade (1 jogador) | O jogador enfrenta os outros seis lutadores em sequência, na ordem do catálogo, contra um adversário controlado pelo jogo; cada etapa reage mais rápido, defende e usa o especial com mais frequência. Derrota permite repetir a etapa; vencer todos mostra a tela de campeão |
 | Interface | Teclado, botões de toque, som simples opcional e tela cheia |
 | Acesso | Site público; não é necessário criar conta no jogo |
 | Cenário | Entrada da ETE Lauro Gomes em pixel art; a esquina original permanece em `public/assets/arena-esquina-original.png` |
@@ -99,7 +100,8 @@ Use o endereço exibido no terminal; o script solicita a porta 5173. O banco loc
 
 | Caminho | Responsabilidade |
 | --- | --- |
-| `app/page.tsx` | Lobby, escolha de personagem, sessão, teclado/toque, loop principal, HUD, treino e convites |
+| `app/page.tsx` | Lobby, escolha de personagem, sessão, teclado/toque, loop principal, HUD, treino, arcade e convites |
+| `lib/ai.ts` | Adversário controlado pelo jogo: escada de oponentes, parâmetros por etapa e decisão de comandos por passo da simulação, com gerador determinístico para testes |
 | `app/globals.css` | Aparência, layout responsivo e controles de toque |
 | `app/layout.tsx` | Metadados, idioma e documento base |
 | `app/api/room/route.ts` | API de salas, autorização por sessão, sinalização e retransmissão HTTP |
@@ -111,6 +113,7 @@ Use o endereço exibido no terminal; o script solicita a porta 5173. O banco loc
 | `drizzle/` | SQL e metadados das migrações |
 | `db/index.ts` | Helper Drizzle do starter; a API de salas usa diretamente statements preparados de D1 |
 | `tests/game.test.ts` | Testes da simulação, executáveis sem navegador ou dependências instaladas |
+| `tests/ai.test.ts` | Testes do adversário automático: escada, escala por etapa, nocaute de alvo parado, troca de golpes entre duas IAs e coerência dos comandos |
 | `tests/rooms.test.mjs` | Testes HTTP de criação, ocupação, espectadores e permissões; exigem servidor ativo |
 | `public/assets/` | Cenário, retratos e folhas de sprites |
 | `build/sites-vite-plugin.ts` | Integração de build com Sites |
@@ -222,6 +225,7 @@ Com a instalação concluída:
 
 ```sh
 node --experimental-strip-types tests/game.test.ts
+node --experimental-strip-types tests/ai.test.ts
 npm exec tsc -- --noEmit
 npm run build
 ```
@@ -337,7 +341,13 @@ Os arquivos baixados pela página caíram de cerca de 15 MB para 3,5 MB. Os retr
 
 Validação desta rodada: `tests/game.test.ts`, TypeScript, build e teste HTTP das salas passaram; o alfa da folha do Catlaca foi conferido sem erros, e seu recorte e ataque de morcegos foram revisados no navegador. O teste de salas cobre a consulta de lobby, rejeição de personagem duplicado, Catlaca como criador e espectador recebendo a dupla. O teste HTTP não substitui uma partida entre dispositivos reais.
 
-## 12. Cenário da sétima versão (16/09/2026)
+## 12. Modo arcade para um jogador (16/09/2026)
+
+O botão **MODO ARCADE · VENÇA TODOS** no lobby inicia uma sequência local contra os outros seis lutadores, na ordem do catálogo, sem sala nem rede. O adversário é controlado por `lib/ai.ts`: a cada intervalo de reação ele decide um comando e o mantém, o que evita tremor. Ele avança quando está longe, soca ou chuta a curta distância, recua às vezes para reabrir espaço, defende quando o jogador ataca perto, tenta pular ou defender diante de um projétil e usa o especial de longe quando tem energia. A etapa define o intervalo de reação (de 0,34 s a 0,14 s) e as probabilidades de defesa, esquiva, especial e agressão. As regras de combate são as mesmas do modo online; não há vantagem numérica para a máquina.
+
+Vencer dois rounds avança para a próxima etapa; perder permite repetir a mesma etapa; vencer as seis mostra a tela de campeão. A barra lateral lista os adversários com o estado de cada um. A partida pausa se a aba ficar em segundo plano, como no treino. O gerador de números é determinístico por semente, o que permite testes reproduzíveis em `tests/ai.test.ts`; no jogo a semente vem do relógio.
+
+## 13. Cenário da sétima versão (16/09/2026)
 
 O plano de fundo da arena foi trocado por uma interpretação em pixel art da fotografia da entrada da ETE Lauro Gomes fornecida pelo proprietário. O arquivo ativo é `public/assets/arena.png`. A arte anterior, da esquina, continua disponível em `public/assets/arena-esquina-original.png`, preservada byte a byte a partir da sexta versão. A legenda abaixo da arena foi atualizada em `app/page.tsx`. O renderizador continua carregando `arena.png`; nenhuma regra de combate, posição dos lutadores ou colisão depende do conteúdo da imagem. Para restaurar o cenário anterior, substitua `arena.png` pela cópia, atualize a legenda e publique uma nova versão.
 

@@ -10,3 +10,6 @@
 
 /* Hero already taken by the room host (lobby of an invited guest). */
 .hero-options button:disabled{opacity:.38;cursor:not-allowed;text-decoration:line-through}
+
+/* Arcade ladder in the sidebar. */
+.member.current strong{color:var(--primary)}.member.beaten{opacity:.6}.member.beaten .player-tag{color:#aeea78;border-color:#aeea78}

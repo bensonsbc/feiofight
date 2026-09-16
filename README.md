@@ -1,6 +1,6 @@
 # Luta de Feio
 
-Jogo de luta em navegador com Marica, Hiro, Lobão, Ratão, Bale, Véio e Catlaca. Dois jogadores por sala, até 20 espectadores, melhor de três rounds e modo de treino.
+Jogo de luta em navegador com Marica, Hiro, Lobão, Ratão, Bale, Véio e Catlaca. Dois jogadores por sala, até 20 espectadores, melhor de três rounds, modo de treino e modo arcade para um jogador, em que você enfrenta os outros seis lutadores em sequência contra a máquina.
 
 ## Controles
 
@@ -16,7 +16,7 @@ As salas expiram após quatro horas e são encerradas quando o criador sai. Cada
 
 Projeto Vinext / React / Cloudflare Workers, D1. Instalar com npm run install:ci e abrir com npm run dev. Migrações em drizzle/. A hospedagem é gerenciada pelo Sites com o projeto identificado em .openai/hosting.json.
 
-Validação: node --experimental-strip-types tests/game.test.ts; node tests/rooms.test.mjs; npx tsc --noEmit; npm run build. O teste de salas aceita uma origem como argumento e remove as salas que cria.
+Validação: node --experimental-strip-types tests/game.test.ts; node --experimental-strip-types tests/ai.test.ts; node tests/rooms.test.mjs; npx tsc --noEmit; npm run build. O teste de salas aceita uma origem como argumento e remove as salas que cria.
 
 ## Arte
 
