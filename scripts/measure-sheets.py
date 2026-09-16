@@ -34,6 +34,8 @@ OVERRIDES = {
     "lemmy-kilmister": {"spin": True},
     # The third-frame dog shares its rectangle with the fighter's outstretched hand; the fourth-frame dog stands clear.
     "iggy-pop": {"projectile": [889, 1195, 113, 91]},
+    # The giant mushroom touches the fighter in both frames; the fourth-frame one stands clear of his fist and shoe.
+    "sergey": {"projectile": [854, 1146, 158, 166]},
 }
 
 

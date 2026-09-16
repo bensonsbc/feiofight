@@ -4,14 +4,14 @@ import {createState,begin,step,emptyInput} from "../lib/game.ts";
 import {existsSync} from "node:fs";
 import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
 {
- assert.equal(ROSTERS.turma.length,7);assert.equal(ROSTERS.rockstar.length,12);
- assert.equal(HEROES.length,19,"every fighter has exactly one roster");
+ assert.equal(ROSTERS.turma.length,7);assert.equal(ROSTERS.rockstar.length,13);
+ assert.equal(HEROES.length,20,"every fighter has exactly one roster");
  assert.equal(new Set(HEROES).size,HEROES.length,"ids are unique across rosters");
  for(const h of HEROES)assert.ok(CHARACTERS[h]?.name&&CHARACTERS[h].special,"catalog entry for "+h);
 }
 {
  assert.ok(isRoster("rockstar")&&isRoster("turma")&&!isRoster("boss"));
- assert.ok(isHero("sid-vicious")&&isHero("rogerio-skylab")&&isHero("iggy-pop"));
+ assert.ok(isHero("sid-vicious")&&isHero("rogerio-skylab")&&isHero("iggy-pop")&&isHero("sergey"));
  assert.ok(isBoss("rogerio-skylab")&&!isBoss("sid-vicious")&&!isBoss("catlaca"),"only the rock star boss is a boss");
  assert.equal(ROSTERS.rockstar.at(-1),"rogerio-skylab","the boss closes the roster so the arcade ladder ends with him");
  for(const r of Object.keys(ROSTER_INFO) as (keyof typeof ROSTER_INFO)[])assert.ok(existsSync("public"+ROSTER_INFO[r].arena),"arena image for "+r);

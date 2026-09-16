@@ -2,7 +2,7 @@
 // the page picks it from the URL (?elenco=rockstar) and the API derives it from the host's hero.
 export const ROSTERS = {
   turma: ["marica", "hiro", "lobao", "ratao", "bale", "veio", "catlaca"],
-  rockstar: ["jim-morrison", "john-lennon", "kurt-cobain", "ozzy-osbourne", "lemmy-kilmister", "elvis-presley", "sid-vicious", "keith-richards", "robert-smith", "joey-ramone", "iggy-pop", "rogerio-skylab"],
+  rockstar: ["jim-morrison", "john-lennon", "kurt-cobain", "ozzy-osbourne", "lemmy-kilmister", "elvis-presley", "sid-vicious", "keith-richards", "robert-smith", "joey-ramone", "iggy-pop", "sergey", "rogerio-skylab"],
 } as const;
 export type Roster = keyof typeof ROSTERS;
 export type Hero = (typeof ROSTERS)[Roster][number];
@@ -35,6 +35,7 @@ export const CHARACTERS: Record<Hero, { name: string; number: string; special: s
   "robert-smith": { name: "ROBERT SMITH", number: "09", special: "Choro da Morte", description: "Lágrimas azuis luminosas atingem o adversário.", color: "#79c6ff" },
   "joey-ramone": { name: "JOEY RAMONE", number: "10", special: "Ondas de Telepatia", description: "Anéis psíquicos magenta avançam até o adversário.", color: "#ff7ae0" },
   "iggy-pop": { name: "IGGY POP", number: "11", special: "Chamado do Cão", description: "Chama um cão que dispara pela arena atrás do adversário.", color: "#d9a066" },
+  sergey: { name: "SERGEY", number: "12", special: "Cogumelo Gigante", description: "Faz brotar um cogumelo roxo gigante que avança sobre o adversário.", color: "#b56cff" },
   "rogerio-skylab": { name: "ROGÉRIO SKYLAB", number: "CHEFE", special: "Arremesso de Dildo", description: "O chefe do CBGB arremessa um dildo rosa que cruza a arena.", color: "#ff7ad9" },
 };
 
