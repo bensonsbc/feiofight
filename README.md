@@ -1,6 +1,6 @@
 # Luta de Feio
 
-Jogo de luta em navegador com Marica, Hiro e Lobão. Dois jogadores por sala, até 20 espectadores, melhor de três rounds e modo de treino.
+Jogo de luta em navegador com Marica, Hiro, Lobão e Ratão. Dois jogadores por sala, até 20 espectadores, melhor de três rounds e modo de treino.
 
 ## Controles
 
@@ -24,4 +24,4 @@ Personagens e folhas de sprites foram gerados a partir das referências fornecid
 
 ## Personagens
 
-O catálogo está em lib/characters.ts. Marica: Brinde Sísmico; Hiro: Galinha das Sombras; Lobão: Uivo Felpudo, uma onda azul-prateada em forma de cabeça de lobo. Todos têm as sete ações e especiais com o mesmo custo e dano-base.
+O catálogo está em lib/characters.ts. Marica: Brinde Sísmico; Hiro: Galinha das Sombras; Lobão: Uivo Felpudo, uma onda azul-prateada em forma de cabeça de lobo; Ratão: Bicicleta Voadora, um arremesso giratório de bicicleta. Todos têm as sete ações e especiais com o mesmo custo e dano-base.

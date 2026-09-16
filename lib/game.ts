@@ -21,7 +21,7 @@ export function step(s:State,inputs:[Input,Input],dt=1/60){
   const input=inputs[i],t=s.fighters[1-i];f.face=f.x<t.x?1:-1;f.time+=dt;f.flash=Math.max(0,f.flash-dt);f.stun=Math.max(0,f.stun-dt);f.energy=Math.min(100,f.energy+dt*4.5);
   if(f.y>0||f.vy>0){f.y+=f.vy*dt;f.vy-=1450*dt;if(f.y<=0){f.y=0;f.vy=0}}
   if(f.stun>0)return;
-  if(f.lock>0){f.lock-=dt;const impact=f.action==="punch"?.12:f.action==="kick"?.22:.33;
+  if(f.lock>0){f.lock-=dt;const impact=f.action==="punch"?.12:f.action==="kick"?.22:f.hero==="ratao"?.55:.33;
    if(!f.hit&&f.time>=impact){f.hit=true;if(f.action==="special"){s.projectiles.push({id:s.tick*2+i,owner:i,x:f.x+f.face*55,y:f.y+65,dir:f.face,life:2,hero:f.hero})}else{const range=f.action==="kick"?140:100;const crouched=t.action==="crouch";if(Math.abs(t.x-f.x)<range&&Math.abs(t.y-f.y)<(crouched?80:125)&&!(f.action==="punch"&&crouched&&f.y===0))damage(s,i,f.action==="kick"?13:8,t.x,t.y+100)}}
    return;
   }

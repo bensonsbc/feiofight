@@ -5,7 +5,7 @@ import {Renderer} from "../lib/render";
 import {RoomNetwork,roomRequest,type Session,type Member} from "../lib/network";
 import { CHARACTERS, HEROES, isHero } from "../lib/characters";
 const title=(h:string)=>isHero(h)?CHARACTERS[h].name:"LUTADOR";
-const specials={hiro:CHARACTERS.hiro.special,marica:CHARACTERS.marica.special,lobao:CHARACTERS.lobao.special};
+const specials={hiro:CHARACTERS.hiro.special,marica:CHARACTERS.marica.special,lobao:CHARACTERS.lobao.special,ratao:CHARACTERS.ratao.special};
 const keyMap:Record<string,keyof Input>={KeyA:"left",KeyD:"right",KeyW:"jump",KeyS:"down",KeyJ:"punch",KeyK:"kick",KeyL:"block",KeyI:"special"};
 export default function Home(){
  const [hero,setHero]=useState<Hero>("marica"),[name,setName]=useState(""),[code,setCode]=useState(""),[session,setSession]=useState<Session|null>(null),[members,setMembers]=useState<Member[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(""),[copied,setCopied]=useState(""),[loaded,setLoaded]=useState(false),[sound,setSound]=useState(false),[direct,setDirect]=useState(false),[onlineError,setOnlineError]=useState(""),[fallback,setFallback]=useState(false),[view,setView]=useState<State>(createState()),[training,setTraining]=useState(false),[latency,setLatency]=useState(0);

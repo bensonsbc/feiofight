@@ -37,4 +37,11 @@ function advance(s:ReturnType<typeof ready>,a=emptyInput(),b=emptyInput(),n=25){
  assert.equal(s.round,2);assert.deepEqual(s.fighters.map(f=>f.hero),["hiro","lobao"],"next round keeps Lobão");
  const host=createState("lobao","marica");rematch(host);assert.equal(host.fighters[0].hero,"lobao","Lobão can be the host fighter");
 }
-console.log("Combat checks passed: range, block, crouch, kick, jump, specials, rounds, rematch, pause and Lobão in both slots.");
+{
+ const s=createState("ratao","hiro");begin(s);advance(s,emptyInput(),emptyInput(),181);s.fighters[0].x=400;s.fighters[1].x=480;s.fighters[0].energy=100;
+ advance(s,{...emptyInput(),special:true},emptyInput(),50);
+ assert.equal(s.fighters[1].hp,77,"Ratão's bicycle special damages the opponent");
+ assert.ok(s.fighters[0].energy<60,"Ratão's bicycle special consumes energy");
+ rematch(s);assert.deepEqual(s.fighters.map(f=>f.hero),["ratao","hiro"],"rematch keeps Ratão");
+}
+console.log("Combat checks passed: range, block, crouch, kick, jump, specials, rounds, rematch, pause, Lobão and Ratão.");
