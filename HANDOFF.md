@@ -2,11 +2,11 @@
 
 ## 1. Ponto de partida
 
-Esta entrega contém o código-fonte e os recursos da sexta versão de **Luta de Feio**, um jogo de luta 2D em pixel art para navegador. A equipe pode executar, testar, modificar e versionar esta pasta em seu próprio ambiente.
+Esta entrega contém o código-fonte e os recursos da sétima versão de **Luta de Feio**, um jogo de luta 2D em pixel art para navegador. A equipe pode executar, testar, modificar e versionar esta pasta em seu próprio ambiente.
 
 - **Jogo publicado:** https://luta-de-feio.alexandrebensonsmith.chatgpt.site/
 - **Revisão de origem:** o commit `HEAD` do repositório que acompanha esta pasta; o pacote externo registra o SHA completo em `ENTREGA.json`.
-- **Versão publicada no Sites:** 6.
+- **Versão publicada no Sites:** 7.
 - **Estado do código:** cópia dos arquivos versionados desta revisão, incluindo este handoff. O código de execução não foi alterado para empacotar a entrega.
 - **Estado do produto:** protótipo jogável. Não é uma implementação de netcode competitivo nem uma operação validada para grande volume de usuários.
 
@@ -38,6 +38,7 @@ Não estão incluídos `node_modules`, resultados de build, caches, banco local,
 | Treino | Um lutador controlável e um alvo parado; não há IA adversária |
 | Interface | Teclado, botões de toque, som simples opcional e tela cheia |
 | Acesso | Site público; não é necessário criar conta no jogo |
+| Cenário | Entrada da ETE Lauro Gomes em pixel art; a esquina original permanece em `public/assets/arena-esquina-original.png` |
 
 ### Controles
 
@@ -335,3 +336,9 @@ No dia da publicação, a operadora do proprietário bloqueava os dois IPs atrib
 Os arquivos baixados pela página caíram de cerca de 15 MB para 3,5 MB. Os retratos individuais continuam RGB e não são carregados pelo jogo. As folhas RGB originais permanecem na revisão de origem `07d5858`.
 
 Validação desta rodada: `tests/game.test.ts`, TypeScript, build e teste HTTP das salas passaram; o alfa da folha do Catlaca foi conferido sem erros, e seu recorte e ataque de morcegos foram revisados no navegador. O teste de salas cobre a consulta de lobby, rejeição de personagem duplicado, Catlaca como criador e espectador recebendo a dupla. O teste HTTP não substitui uma partida entre dispositivos reais.
+
+## 12. Cenário da sétima versão (16/09/2026)
+
+O plano de fundo da arena foi trocado por uma interpretação em pixel art da fotografia da entrada da ETE Lauro Gomes fornecida pelo proprietário. O arquivo ativo é `public/assets/arena.png`. A arte anterior, da esquina, continua disponível em `public/assets/arena-esquina-original.png`, preservada byte a byte a partir da sexta versão. A legenda abaixo da arena foi atualizada em `app/page.tsx`. O renderizador continua carregando `arena.png`; nenhuma regra de combate, posição dos lutadores ou colisão depende do conteúdo da imagem. Para restaurar o cenário anterior, substitua `arena.png` pela cópia, atualize a legenda e publique uma nova versão.
+
+A fotografia de referência não integra o repositório nem o pacote de entrega. A imagem gerada é uma interpretação visual, não uma reprodução documental do local.
