@@ -4,8 +4,8 @@ import {createBrain,think,ladder,levelFor} from "../lib/ai.ts";
 {
  assert.deepEqual(ladder("marica"),["hiro","lobao","ratao","bale","veio","catlaca"],"ladder follows the catalog and skips the player");
  assert.equal(ladder("catlaca").length,6);assert.ok(!ladder("catlaca").includes("catlaca"));
- assert.deepEqual(ladder("elvis-presley"),["jim-morrison","john-lennon","kurt-cobain","ozzy-osbourne","lemmy-kilmister","sid-vicious","keith-richards","robert-smith","joey-ramone","rogerio-skylab"],"rock star ladder stays inside its roster and ends with the boss");
- assert.equal(ladder("rogerio-skylab").length,10);assert.ok(!ladder("rogerio-skylab").includes("rogerio-skylab"));
+ assert.deepEqual(ladder("elvis-presley"),["jim-morrison","john-lennon","kurt-cobain","ozzy-osbourne","lemmy-kilmister","sid-vicious","keith-richards","robert-smith","joey-ramone","iggy-pop","rogerio-skylab"],"rock star ladder stays inside its roster and ends with the boss");
+ assert.equal(ladder("rogerio-skylab").length,11);assert.ok(!ladder("rogerio-skylab").includes("rogerio-skylab"));
  const shuffled=ladder("elvis-presley",createBrain(42).rng);
  assert.deepEqual([...shuffled].sort(),[...ladder("elvis-presley")].sort(),"a shuffled ladder is a permutation of the roster");
  assert.equal(shuffled.at(-1),"rogerio-skylab","the boss stays last after the shuffle");

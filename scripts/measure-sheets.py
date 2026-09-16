@@ -32,6 +32,8 @@ OVERRIDES = {
     # Sid keeps the bass in his hands in every frame; the body of the bass from frame 2 is thrown.
     "sid-vicious": {"projectile": [322, 1120, 100, 48], "spin": True},
     "lemmy-kilmister": {"spin": True},
+    # The third-frame dog shares its rectangle with the fighter's outstretched hand; the fourth-frame dog stands clear.
+    "iggy-pop": {"projectile": [889, 1195, 113, 91]},
 }
 
 
@@ -139,7 +141,8 @@ def measure(path, sheet_id):
     # Row centres come from the seven labels on the left. Figures overlap the neighbouring row's
     # band (high kicks, floor shadows), so rows are never cut as horizontal bands.
     label_c = [sum(labels[y * W:(y + 1) * W]) for y in range(H)]
-    lab = [b for b in bands(label_c, 6) if b[1] - b[0] >= 15]
+    # A label is tall and wide; a heel poking into the label column is tall but only a few pixels wide.
+    lab = [b for b in bands(label_c, 6) if b[1] - b[0] >= 15 and max(label_c[b[0]:b[1]]) >= 40]
     lab = merge_to(lab, 7)
     if len(lab) != 7: raise SystemExit(f"{sheet_id}: expected 7 labels, found {len(lab)}")
     # Row windows: between two labels, cut at the emptiest scanline. Figures of neighbouring rows
@@ -184,7 +187,10 @@ def measure(path, sheet_id):
     special = [f for f, (r, k) in fighters.items() if r == 5]
     for c in frags:
         cx = (c[0] + c[2]) / 2; cy = (c[1] + c[3]) / 2
-        throwers = [f for f in special if (f[0] + f[2]) / 2 < cx and not (f[0] <= cx <= f[2] and f[1] <= cy <= f[3])]
+        # A figure whose box overlaps the effect on its left half is not its thrower: that is the
+        # previous frame's projectile flying into this frame's space. An effect on a figure's right
+        # half (a dog at the fighter's hand) belongs to that figure.
+        throwers = [f for f in special if (f[0] + f[2]) / 2 < cx and not (f[0] <= cx < (f[0] + f[2]) / 2 and f[1] <= cy <= f[3])]
         if c[4] >= 300 and cuts[5] <= cy < cuts[6] and throwers:
             best = max(throwers, key=lambda f: (f[0] + f[2]) / 2)
         else:
