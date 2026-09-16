@@ -75,6 +75,8 @@ for row in range(7):
 add('catlaca-sheet.png',[895,1148,125,140],1024,1536,139,False,"catlaca/bats")
 
 LEG_ZONE = 0.58  # trapped background whose top lies below this fraction of the sprite height is removed
+BIG_POCKET = 1200  # a trapped area this large (pixels at sheet scale) in the exact sheet colour is a gap between the legs
+SHADOW_ROWS = 16   # rows above the baseline where the painted floor shadow can touch the shoes
 ERASE = {}       # sheet -> [x, y, w, h] rectangles to make transparent (label leftovers from a measured atlas)
 
 
@@ -111,17 +113,44 @@ def sprite_mask(im, spec):
         seen[i] = 1
         if match[i]: q.append(i); rem[i] = 1
 
+    def flood():
+        while q:
+            i = q.popleft()
+            if i % W > 0: visit(i - 1)
+            if i % W < W - 1: visit(i + 1)
+            visit(i - W); visit(i + W)
+
     # 1. Everything background-coloured that connects to the crop border.
     for x in range(W): visit(x); visit((H - 1) * W + x)
     for y in range(H): visit(y * W); visit(y * W + W - 1)
-    while q:
-        i = q.popleft()
-        if i % W > 0: visit(i - 1)
-        if i % W < W - 1: visit(i + 1)
-        visit(i - W); visit(i + W)
-    # 2. Background trapped between the legs: components never reached from the border
+    flood()
+    # 2. Measured sheets: the painted floor shadow is a bluish mid grey around the shoes. The part
+    #    reachable from the background goes, so the fighter stands on the game floor instead of a
+    #    grey blot. Shoe soles enclosed by their outline are never reached and stay; the greyish
+    #    shading of white trousers is not bluish and stays too. The shadow also closes the gap
+    #    between the legs at the floor, so once it is gone the gap joins the outside background.
+    if not gray:
+        dark = max(bg) - 30; first = max(0, round(baseline * sy) - SHADOW_ROWS); last = min(H, round(baseline * sy))
+        def shadowish(i):
+            r, g, b = px[i]; mx = max(r, g, b)
+            return mx - min(r, g, b) < 36 and 50 <= mx < dark and b - r >= 8 and not match[i]
+        qs = deque(i for i in range(first * W, last * W) if rem[i])
+        while qs:
+            i = qs.popleft()
+            for k in ((i - 1) if i % W > 0 else -1, (i + 1) if i % W < W - 1 else -1, i - W, i + W):
+                if first * W <= k < last * W and not rem[k] and shadowish(k):
+                    rem[k] = 1; qs.append(k); seen[k] = 1
+        for i in range(first * W, last * W):
+            if rem[i]:
+                for k in ((i - 1) if i % W > 0 else -1, (i + 1) if i % W < W - 1 else -1, i - W, i + W):
+                    if 0 <= k < n: visit(k)
+        flood()
+    # 3. Background trapped between the legs: components never reached from the border
     #    whose top lies in the leg zone. Shirts sit higher and are left alone.
+    #    On measured sheets a large pocket painted in the exact sheet colour is also a gap between
+    #    the legs (an effect at the floor can close it); clothing folds only come near that colour.
     done = bytearray(n); limit = round(H * LEG_ZONE)
+    dist = lambda i: max(abs(px[i][0] - bg[0]), abs(px[i][1] - bg[1]), abs(px[i][2] - bg[2]))
     for i in range(limit * W, n):
         if match[i] and not rem[i] and not done[i]:
             comp = []; top = H; qq = deque([i]); done[i] = 1
@@ -130,9 +159,10 @@ def sprite_mask(im, spec):
                 for k in ((j - 1) if j % W > 0 else -1, (j + 1) if j % W < W - 1 else -1, j - W, j + W):
                     if 0 <= k < n and not done[k] and match[k] and not rem[k]:
                         done[k] = 1; qq.append(k)
-            if top >= limit:
+            exact = not gray and len(comp) >= BIG_POCKET * sy * sy and sorted(dist(j) for j in comp)[len(comp) // 2] < 12
+            if top >= limit or exact:
                 for j in comp: rem[j] = 1
-    # 3. The painted floor shadow: the game draws its own.
+    # 4. The painted floor shadow under the feet: the game draws its own.
     for y in range(round(baseline * sy), H):
         for x in range(W): rem[y * W + x] = 1
     return box, W, H, rem

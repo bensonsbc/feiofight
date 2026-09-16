@@ -6,6 +6,11 @@ import {createBrain,think,ladder,levelFor} from "../lib/ai.ts";
  assert.equal(ladder("catlaca").length,6);assert.ok(!ladder("catlaca").includes("catlaca"));
  assert.deepEqual(ladder("elvis-presley"),["jim-morrison","john-lennon","kurt-cobain","ozzy-osbourne","lemmy-kilmister","sid-vicious","keith-richards","robert-smith","joey-ramone","rogerio-skylab"],"rock star ladder stays inside its roster and ends with the boss");
  assert.equal(ladder("rogerio-skylab").length,10);assert.ok(!ladder("rogerio-skylab").includes("rogerio-skylab"));
+ const shuffled=ladder("elvis-presley",createBrain(42).rng);
+ assert.deepEqual([...shuffled].sort(),[...ladder("elvis-presley")].sort(),"a shuffled ladder is a permutation of the roster");
+ assert.equal(shuffled.at(-1),"rogerio-skylab","the boss stays last after the shuffle");
+ assert.deepEqual(ladder("elvis-presley",createBrain(42).rng),shuffled,"same seed, same order");
+ assert.ok([1,2,3,4,5].some(seed=>ladder("marica",createBrain(seed).rng).join()!==ladder("marica").join()),"the shuffle changes the order");
 }
 {
  assert.ok(levelFor(5).reaction<levelFor(0).reaction,"later stages react faster");

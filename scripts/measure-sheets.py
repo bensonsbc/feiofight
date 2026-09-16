@@ -40,6 +40,11 @@ def border_median(px, W, H):
     return tuple(sorted(px[i][c] for i in idx)[len(idx) >> 1] for c in range(3))
 
 
+def is_shadow(p, d, dark):
+    """Painted floor shadow: a bluish mid grey, darker than the sheet but far from black shoes."""
+    return d < 115 and max(p) - min(p) < 25 and max(p) < dark
+
+
 def figure_mask(im):
     """Returns (figure mask, label mask, bg). Labels live left of LABEL_WIDTH, figures right of it."""
     W, H = im.size
@@ -54,7 +59,7 @@ def figure_mask(im):
         # The painted floor shadows are unsaturated grey a little darker than the background. They
         # are wide enough to touch the neighbouring figure's shadow, which would merge two fighters,
         # so they are not part of the figure mask. White shirts are lighter than the background and stay.
-        if d < 115 and max(p) - min(p) < 25 and max(p) < dark: continue
+        if is_shadow(p, d, dark): continue
         m[i] = 1
     return m, labels, bg
 
@@ -168,7 +173,10 @@ def measure(path, sheet_id):
         frags += bigs[4:] + [c for c in cs if c[4] < BIG]
     # Letters of a long label (ABAIXAR, ESPECIAL) spill past the label column. They are small
     # components hugging the left edge; they are not part of any figure and get erased from the sheet.
-    erase = [c for c in frags if c[2] < LABEL_WIDTH + 40 and c[4] < 600 and c[3] - c[1] < 60]
+    erase = [c for c in frags if c[2] < LABEL_WIDTH + 65 and c[4] < 600 and c[3] - c[1] < 60]
+    # The bottom of the title letters hangs below the title band into the first row. Those are
+    # short components glued to the band edge, far smaller than a head; they get erased too.
+    erase += [c for c in frags if c not in erase and c[1] <= TITLE_HEIGHT and c[3] - c[1] < 28 and c[4] < 600]
     frags = [c for c in frags if c not in erase]
     # Every fragment joins the nearest fighter, so a shadow stays with its own figure. In the special
     # row a sizeable detached effect flies to the right of whoever threw it, so it joins the nearest
@@ -191,13 +199,28 @@ def measure(path, sheet_id):
             figure = max(group, key=lambda c: c[4])
             x0 = max(LABEL_WIDTH, min(c[0] for c in group) - PAD); x1 = min(W - 1, max(c[2] for c in group) + PAD)
             y0 = max(TITLE_HEIGHT, min(c[1] for c in group) - PAD); y1 = min(H - 1, max(c[3] for c in group) + PAD)
-            # anchor: horizontal centre of the fighter's lowest 25% (the feet), relative to the crop
-            fy0 = figure[3] - (figure[3] - figure[1]) // 4
-            xs = [x for y in range(fy0, figure[3] + 1) for x in range(figure[0], figure[2] + 1) if m[y * W + x]]
-            anchor = round(sum(xs) / len(xs)) - x0 if xs else (figure[0] + figure[2]) // 2 - x0
-            baseline = figure[3] - y0 + 1  # rows below the fighter's feet (the painted shadow) are cleared in-game
-            crops.append([x0, y0, x1 - x0 + 1, y1 - y0 + 1, anchor, baseline])
-            anchors_dbg.append((x0 + anchor, figure[3]))
+            # The body is the figure plus its fragments: a white suit breaks into pieces where its
+            # shading matches the sheet. Not body: effects flying right of the figure in the special
+            # row, and the short wide floor shadow left under an airborne figure.
+            body = [c for c in group if not (r == 5 and c[0] > figure[2]) and not (c[1] > figure[3] - 5 and c[3] - c[1] < 24)]
+            bx0 = min(c[0] for c in body); by0 = min(c[1] for c in body); bx1 = max(c[2] for c in body); by1 = max(c[3] for c in body)
+            feet = by1  # the strict shadow rule of figure_mask keeps the painted shadow out of the body
+            if r == 0 and k == 0: walk_height = feet - by0 + 1
+            # anchor: horizontal centre of the body's lowest 25% (the feet), relative to the crop
+            fy0 = feet - (feet - by0) // 4
+            xs = [x for y in range(fy0, feet + 1) for x in range(bx0, bx1 + 1) if m[y * W + x]]
+            anchor = round(sum(xs) / len(xs)) - x0 if xs else (bx0 + bx1) // 2 - x0
+            crops.append([x0, y0, x1 - x0 + 1, y1 - y0 + 1, anchor, feet + 1])
+        # The four frames of a row stand on one floor line (jumps excepted). A frame whose feet line
+        # strays from the row median by more than 12 px was measured on a broken figure: it takes the
+        # median, so no frame sinks into or floats above the floor mid-animation.
+        if r != 1:
+            med = sorted(c[5] for c in crops)[2]
+            for c in crops:
+                if abs(c[5] - med) > 12: c[5] = med
+        for c in crops:
+            anchors_dbg.append((c[0] + c[4], c[5] - 1))
+            c[5] -= c[1]  # baseline relative to the crop; rows below it (the painted shadow) are cleared in-game
         frames[ACTIONS[r]] = crops
     # Projectile: the largest detached effect to the right of its thrower among the special frames.
     best_area = 0
@@ -209,8 +232,7 @@ def measure(path, sheet_id):
         if effect and area >= 600 and area > best_area:  # stray specks never qualify
             ex0 = min(c[0] for c in effect); ey0 = min(c[1] for c in effect); ex1 = max(c[2] for c in effect); ey1 = max(c[3] for c in effect)
             projectile = [ex0 - 3, ey0 - 3, ex1 - ex0 + 7, ey1 - ey0 + 7]; best_area = area
-    walk0 = max(cells[(0, 0)], key=lambda c: c[4])
-    standing = round((walk0[3] - walk0[1]) * 0.9)  # renders a touch under the crop, like the existing cast
+    standing = round(walk_height * 0.9)  # renders a touch under the crop, like the existing cast
     ov = OVERRIDES.get(sheet_id, {})
     if "projectile" in ov: projectile = ov["projectile"]
     if projectile is None:

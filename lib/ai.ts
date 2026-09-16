@@ -1,8 +1,16 @@
 import {emptyInput,type Input,type State} from "./game.ts";
 import {heroesOf,isBoss,rosterOf,type Hero} from "./characters.ts";
 
-/** Opponents a solo player must beat: the rest of their roster, in catalog order (the boss comes last). */
-export function ladder(hero:Hero):Hero[]{return heroesOf(rosterOf(hero)).filter(h=>h!==hero)}
+/**
+ * Opponents a solo player must beat: the rest of their roster. With a generator the order is
+ * shuffled (Fisher–Yates), so every run is a different sequence; the roster boss always comes last.
+ * Difficulty is tied to the stage, not the opponent, so it still rises fight by fight.
+ */
+export function ladder(hero:Hero,rng?:()=>number):Hero[]{
+ const all=heroesOf(rosterOf(hero)).filter(h=>h!==hero),boss=all.filter(isBoss),rest=all.filter(h=>!isBoss(h));
+ if(rng)for(let i=rest.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[rest[i],rest[j]]=[rest[j],rest[i]]}
+ return [...rest,...boss];
+}
 
 /** Stage n → reaction time and odds. Later stages react faster, block more and use specials more; the boss goes one level beyond the top stage. */
 export function levelFor(stage:number,boss=false){const l=boss?6:Math.max(0,Math.min(5,stage));return {reaction:.34-.04*l,block:.25+.11*l,special:.35+.1*l,aggression:.5+.08*l,dodge:.2+.12*l}}
