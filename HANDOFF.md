@@ -321,7 +321,7 @@ As mudanças abaixo foram aplicadas sobre a versão 5. O pacote externo atualiza
 
 ### Publicação paralela na Cloudflare (16/09/2026)
 
-Além do Sites, a versão anterior foi publicada na conta Cloudflare do proprietário, plano Workers Free, como Worker `luta-de-feio` com banco D1 `luta-de-feio` (id `8a0bbd6e-fec9-4ab5-a4f5-cf4091278552`, migração aplicada). Endereço: https://luta-de-feio.alexandrebenson.workers.dev. A publicação da sexta versão nesse endereço deve ser conferida separadamente. O `vite.config.ts` passou a aceitar `D1_DATABASE_NAME` e `D1_DATABASE_ID` por variável de ambiente; sem elas o build continua usando o placeholder do Sites. Fluxo de atualização:
+Além do Sites, o jogo está publicado na conta Cloudflare do proprietário, plano Workers Free, como Worker `luta-de-feio` com banco D1 `luta-de-feio` (id `8a0bbd6e-fec9-4ab5-a4f5-cf4091278552`, migração aplicada). Endereço: https://luta-de-feio.alexandrebenson.workers.dev. A sexta versão, com o Catlaca, foi publicada nesse endereço em 16/09/2026 a partir do commit `0044e5b`; o teste HTTP de salas passou contra ele e o Catlaca foi conferido no treino. O `vite.config.ts` passou a aceitar `D1_DATABASE_NAME` e `D1_DATABASE_ID` por variável de ambiente; sem elas o build continua usando o placeholder do Sites. Fluxo de atualização:
 
 ```sh
 D1_DATABASE_NAME=luta-de-feio D1_DATABASE_ID=8a0bbd6e-fec9-4ab5-a4f5-cf4091278552 npm run build
