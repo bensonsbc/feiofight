@@ -1,4 +1,5 @@
-export type Hero="marica"|"hiro";
+import { defaultOpponent, type Hero } from "./characters.ts";
+export type { Hero } from "./characters.ts";
 export type Input={left:boolean;right:boolean;jump:boolean;down:boolean;punch:boolean;kick:boolean;block:boolean;special:boolean};
 export const emptyInput=():Input=>({left:false,right:false,jump:false,down:false,punch:false,kick:false,block:false,special:false});
 export type Action="idle"|"walk"|"jump"|"crouch"|"punch"|"kick"|"special"|"block"|"hurt";
@@ -6,9 +7,9 @@ export type Fighter={hero:Hero;x:number;y:number;vy:number;face:number;hp:number
 export type Projectile={id:number;owner:number;x:number;y:number;dir:number;life:number;hero:Hero};
 export type State={fighters:[Fighter,Fighter];projectiles:Projectile[];phase:"waiting"|"countdown"|"fight"|"round"|"over";timer:number;clock:number;round:number;winner:number;tick:number;connected:boolean;paused:boolean;hitFx:{x:number;y:number;life:number;block:boolean}|null};
 function fighter(hero:Hero,x:number,face:number):Fighter{return {hero,x,y:0,vy:0,face,hp:100,energy:35,wins:0,action:"idle",time:0,lock:0,hit:false,stun:0,flash:0,steps:0}}
-export function createState(hero:Hero="marica"):State{return {fighters:[fighter(hero,270,1),fighter(hero==="marica"?"hiro":"marica",690,-1)],projectiles:[],phase:"waiting",timer:99,clock:0,round:1,winner:-1,tick:0,connected:false,paused:false,hitFx:null}}
+export function createState(hero:Hero="marica",opponent:Hero=defaultOpponent(hero)):State{return {fighters:[fighter(hero,270,1),fighter(opponent,690,-1)],projectiles:[],phase:"waiting",timer:99,clock:0,round:1,winner:-1,tick:0,connected:false,paused:false,hitFx:null}}
 export function begin(s:State){if(s.phase!=="waiting")return;s.phase="countdown";s.clock=3;s.connected=true}
-export function rematch(s:State){const n=createState(s.fighters[0].hero);n.tick=s.tick+1;Object.assign(s,n);begin(s)}
+export function rematch(s:State){const n=createState(s.fighters[0].hero,s.fighters[1].hero);n.tick=s.tick+1;Object.assign(s,n);begin(s)}
 function newRound(s:State){const wins=s.fighters.map(f=>f.wins);s.fighters=[fighter(s.fighters[0].hero,270,1),fighter(s.fighters[1].hero,690,-1)];s.fighters.forEach((f,i)=>f.wins=wins[i]);s.projectiles=[];s.timer=99;s.round++;s.phase="countdown";s.clock=3;s.winner=-1}
 function damage(s:State,owner:number,value:number,x:number,y:number,projectile=false){const f=s.fighters[owner],t=s.fighters[1-owner];const blocked=t.action==="block"&&t.face===Math.sign(f.x-t.x)&&t.y<10;const amount=blocked?Math.max(1,Math.round(value*.12)):value;t.hp=Math.max(0,t.hp-amount);t.energy=Math.min(100,t.energy+5);f.energy=Math.min(100,f.energy+(projectile?0:7));t.flash=.13;t.stun=blocked?.1:.22;t.x=Math.max(50,Math.min(910,t.x+f.face*(blocked?7:18)));if(!blocked){t.action="hurt";t.lock=0} s.hitFx={x,y,life:.16,block:blocked}}
 export function step(s:State,inputs:[Input,Input],dt=1/60){

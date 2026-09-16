@@ -26,4 +26,15 @@ function advance(s:ReturnType<typeof ready>,a=emptyInput(),b=emptyInput(),n=25){
 {
  const s=ready();s.paused=true;const x=s.fighters[0].x;advance(s,{...emptyInput(),right:true});assert.equal(s.fighters[0].x,x,"pause stops simulation")
 }
-console.log("Combat checks passed: range, block, crouch, kick, jump, special, rounds, rematch and pause.");
+{
+ const s=createState("hiro","lobao");begin(s);advance(s,emptyInput(),emptyInput(),181);s.fighters[0].x=400;s.fighters[1].x=480;s.fighters[1].energy=100;
+ advance(s,emptyInput(),{...emptyInput(),special:true},50);
+ assert.equal(s.fighters[0].hp,77,"Lobão's special damages the opponent");
+ assert.ok(s.fighters[1].energy<60,"Lobão's special consumes energy");
+ rematch(s);assert.deepEqual(s.fighters.map(f=>f.hero),["hiro","lobao"],"rematch keeps selected roster");
+ advance(s,emptyInput(),emptyInput(),181);s.fighters[0].x=400;s.fighters[1].x=480;s.fighters[0].hp=1;
+ advance(s,emptyInput(),{...emptyInput(),punch:true});advance(s,emptyInput(),emptyInput(),380);
+ assert.equal(s.round,2);assert.deepEqual(s.fighters.map(f=>f.hero),["hiro","lobao"],"next round keeps Lobão");
+ const host=createState("lobao","marica");rematch(host);assert.equal(host.fighters[0].hero,"lobao","Lobão can be the host fighter");
+}
+console.log("Combat checks passed: range, block, crouch, kick, jump, specials, rounds, rematch, pause and Lobão in both slots.");

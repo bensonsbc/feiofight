@@ -1,5 +1,5 @@
 import {emptyInput,type Input,type State,type Hero} from "./game";
-export type Session={code:string;id:string;token:string;slot:number|null;hero:Hero|null;name:string;host:string};
+export type Session={code:string;id:string;token:string;slot:number|null;hero:Hero|null;name:string;host:string;hostHero:Hero};
 export type Member={id:string;name:string;slot:number|null;hero:Hero|null;seen:number;input?:Input;answer?:RTCSessionDescriptionInit};
 export async function roomRequest(body:unknown,token?:string){const r=await fetch("/api/room",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(7000)});const d:any=await r.json();if(!r.ok)throw new Error(d.error||"Falha na conexão.");return d}
 type Peer={pc:RTCPeerConnection;channel?:RTCDataChannel;answer?:string;started:number};

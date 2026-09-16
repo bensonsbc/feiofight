@@ -1,4 +1,5 @@
 import {env} from "cloudflare:workers";
+import { CHARACTERS, defaultOpponent, isHero } from "../../../lib/characters";
 
 const json=(body:unknown,status=200)=>Response.json(body,{status,headers:{"Cache-Control":"no-store"}});
 type Row={id:string;room:string;secret:string;name:string;slot:number|null;hero:string;seen:number;input:string|null;offer:string|null;answer:string|null};
@@ -14,12 +15,13 @@ export async function POST(req:Request){
   const now=Date.now();const op=b.op;
   if(op==="create"||op==="join"){
    const name=String(b.name||"Jogador").trim().slice(0,20)||"Jogador";
-   const hero=b.hero==="hiro"?"hiro":"marica";
+   if(b.hero!==undefined&&!isHero(b.hero))return json({error:"Personagem inválido."},400);
+   const hero=isHero(b.hero)?b.hero:"marica";
    const id=crypto.randomUUID(),token=crypto.randomUUID()+crypto.randomUUID(),secret=await digest(token);
    if(op==="create"){
     const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";const code=[...crypto.getRandomValues(new Uint8Array(8))].map(n=>alphabet[n%32]).join("");
     await db.batch([db.prepare("DELETE FROM rooms WHERE expires < ?").bind(now),db.prepare("INSERT INTO rooms(code,host,created,expires,updated) VALUES(?,?,?,?,?)").bind(code,id,now,now+14400000,now),db.prepare("INSERT INTO members(id,room,secret,name,slot,hero,seen) VALUES(?,?,?,?,0,?,?)").bind(id,code,secret,name,hero,now)]);
-    return json({code,id,token,slot:0,hero,name,host:id});
+    return json({code,id,token,slot:0,hero,name,host:id,hostHero:hero});
    }
    const code=String(b.code||"").toUpperCase();if(!/^[A-Z2-9]{8}$/.test(code))return json({error:"Use o código de 8 caracteres da sala."},400);
    const room=await db.prepare("SELECT * FROM rooms WHERE code=? AND expires>?").bind(code,now).first<Room>();
@@ -29,9 +31,12 @@ export async function POST(req:Request){
    await db.prepare("DELETE FROM members WHERE room=? AND slot IS NOT 0 AND seen<?").bind(code,now-30000).run();
    const total=await db.prepare("SELECT COUNT(*) AS n FROM members WHERE room=?").bind(code).first<{n:number}>();
    if((total?.n||0)>=22)return json({error:"A sala atingiu o limite de 20 espectadores."},409);
-   const slot=b.watch===true?null:1;const assigned=slot===null?null:host.hero==="marica"?"hiro":"marica";
+   const slot=b.watch===true?null:1;
+   const hostHero=isHero(host.hero)?host.hero:"marica";
+   const assigned=slot===null?null:isHero(b.hero)?b.hero:defaultOpponent(hostHero);
+   if(assigned===hostHero)return json({error:CHARACTERS[hostHero].name+" já está na sala. Escolha outro personagem."},409);
    try{await db.prepare("INSERT INTO members(id,room,secret,name,slot,hero,seen) VALUES(?,?,?,?,?,?,?)").bind(id,code,secret,name,slot,assigned,now).run()}catch(e){if(String(e).includes("UNIQUE"))return json({error:"Os dois lugares já estão ocupados. Entre para assistir."},409);throw e}
-   return json({code,id,token,slot,hero:assigned,name,host:room.host});
+   return json({code,id,token,slot,hero:assigned,name,host:room.host,hostHero});
   }
   const id=String(b.id||""),token=String(req.headers.get("authorization")||"").replace(/^Bearer /,"");
   if(!token)return json({error:"Sessão inválida. Entre novamente."},401);
