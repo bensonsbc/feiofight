@@ -1,4 +1,4 @@
-export const HEROES = ["marica", "hiro", "lobao", "ratao"] as const;
+export const HEROES = ["marica", "hiro", "lobao", "ratao", "bale"] as const;
 export type Hero = (typeof HEROES)[number];
 
 export const CHARACTERS: Record<Hero, { name: string; number: string; special: string; description: string; color: string }> = {
@@ -6,6 +6,7 @@ export const CHARACTERS: Record<Hero, { name: string; number: string; special: s
   hiro: { name: "HIRO", number: "02", special: "Galinha das Sombras", description: "Uma galinha preta invocada entre velas e energia violeta.", color: "#c895ff" },
   lobao: { name: "LOBÃO", number: "03", special: "Uivo Felpudo", description: "Um uivo que lança uma onda azul-prateada na forma de um lobo.", color: "#9cdbff" },
   ratao: { name: "RATÃO", number: "04", special: "Bicicleta Voadora", description: "Arremessa uma bicicleta giratória contra o oponente.", color: "#ff9c70" },
+  bale: { name: "BALE", number: "05", special: "Turma dos Sete", description: "Convoca sete pequenos guerreiros de conto de fadas para atacar em grupo.", color: "#8ff0a4" },
 };
 
 export function isHero(value: unknown): value is Hero {

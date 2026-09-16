@@ -33,6 +33,6 @@ export function step(s:State,inputs:[Input,Input],dt=1/60){
   const dir=Number(input.right)-Number(input.left);if(dir){f.x=Math.max(50,Math.min(910,f.x+dir*235*dt));f.steps+=dt}f.action=f.y>0?"jump":dir?"walk":"idle";
  });
  const [a,b]=s.fighters;const gap=b.x-a.x;if(Math.abs(gap)<68&&Math.abs(a.y-b.y)<110){const dir=gap>=0?1:-1,overlap=68-Math.abs(gap);a.x=Math.max(50,Math.min(910,a.x-dir*overlap/2));b.x=Math.max(50,Math.min(910,b.x+dir*overlap/2))}
- s.projectiles=s.projectiles.filter(p=>{p.x+=p.dir*470*dt;p.life-=dt;const t=s.fighters[1-p.owner];if(Math.abs(p.x-t.x)<48&&p.y>t.y+5&&p.y<t.y+(t.action==="crouch"?90:165)){damage(s,p.owner,23,t.x,p.y,true);return false}return p.life>0&&p.x>0&&p.x<960});
+ s.projectiles=s.projectiles.filter(p=>{p.x+=p.dir*470*dt;p.life-=dt;const t=s.fighters[1-p.owner],height=t.action==="crouch"?90:t.hero==="bale"?130:165;if(Math.abs(p.x-t.x)<48&&p.y>t.y+5&&p.y<t.y+height){damage(s,p.owner,23,t.x,p.y,true);return false}return p.life>0&&p.x>0&&p.x<960});
  if(a.hp===0||b.hp===0||s.timer===0){s.winner=a.hp===b.hp?-1:a.hp>b.hp?0:1;if(s.winner>=0)s.fighters[s.winner].wins++;s.phase="round";s.clock=3.2;s.projectiles=[]}
 }
