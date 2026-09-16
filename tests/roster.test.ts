@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {CHARACTERS,HEROES,ROSTERS,ROSTER_INFO,defaultOpponent,heroesOf,isBoss,isHero,isRoster,rosterOf} from "../lib/characters.ts";
+import {CHARACTERS,HEROES,ROSTERS,ROSTER_INFO,defaultOpponent,heroesOf,isBoss,isHero,isRoster,portrait,rosterOf,shotOf,statsOf} from "../lib/characters.ts";
 import {createState,begin,step,emptyInput} from "../lib/game.ts";
 import {existsSync} from "node:fs";
 import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
@@ -7,7 +7,7 @@ import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
  assert.equal(ROSTERS.turma.length,7);assert.equal(ROSTERS.rockstar.length,13);
  assert.equal(HEROES.length,20,"every fighter has exactly one roster");
  assert.equal(new Set(HEROES).size,HEROES.length,"ids are unique across rosters");
- for(const h of HEROES)assert.ok(CHARACTERS[h]?.name&&CHARACTERS[h].special,"catalog entry for "+h);
+ for(const h of HEROES){assert.ok(CHARACTERS[h]?.name&&CHARACTERS[h].special&&CHARACTERS[h].ending,"catalog entry with ending for "+h);const st=statsOf(h),sh=shotOf(h);assert.ok(st.hp>=85&&st.hp<=125&&st.speed>.8&&st.speed<1.3&&st.power>.8&&st.power<1.2,"sane stats for "+h);assert.ok(sh.speed>=280&&sh.speed<=650&&sh.height>=20&&sh.height<=140&&sh.damage>=18&&sh.damage<=32,"sane shot for "+h);assert.ok(existsSync("public"+portrait(h))&&existsSync("public"+portrait(h,true)),"portrait files for "+h)}
 }
 {
  assert.ok(isRoster("rockstar")&&isRoster("turma")&&!isRoster("boss"));
@@ -35,7 +35,7 @@ import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
  for(let i=0;i<181;i++)step(s,[emptyInput(),emptyInput()]);
  s.fighters[0].x=400;s.fighters[1].x=480;s.fighters[0].energy=100;
  for(let i=0;i<50;i++)step(s,[{...emptyInput(),special:true},emptyInput()]);
- assert.equal(s.fighters[1].hp,77,"Elvis's seismic wave hits for 23");
+ assert.equal(s.fighters[1].hp,100-Math.round(shotOf("elvis-presley").damage*statsOf("elvis-presley").power),"Elvis's seismic wave hits for its listed damage");
 }
 {
  // The boss throws too: his special lands from range like any rock star projectile.
@@ -45,4 +45,4 @@ import atlas from "../art/source/rockstar/atlas.json" with {type:"json"};
  for(let i=0;i<50;i++)step(s,[{...emptyInput(),special:true},emptyInput()]);
  assert.ok(s.fighters[1].hp<100,"Skylab's throw hits");
 }
-console.log("Roster checks passed: two rosters, unique ids, catalog, same-roster opponents, per-roster arena, boss, measured atlas and a rock star fight.");
+console.log("Roster checks passed: two rosters, unique ids, catalog with stats, shots, endings and portraits, same-roster opponents, per-roster arena, boss, measured atlas and a rock star fight.");

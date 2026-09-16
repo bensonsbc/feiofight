@@ -9,7 +9,7 @@ try{
  viewer=await request({op:'join',name:'QA Viewer',code:host.code,watch:true});assert.equal(viewer.slot,null);
  const taken=await request({op:'peek',code:host.code});assert.equal(taken.rivalHero,'marica','peek reports the taken rival seat');assert.equal(taken.spectators,1);assert.equal(JSON.stringify(taken).includes('secret'),false);
  await request({op:'sync',input:{punch:true}},viewer,403);await request({op:'sync',state:{fighters:[{},{}]}},guest,403);
- await request({op:'sync',input:{left:true,punch:true}},guest);const h=await request({op:'sync'},host);assert.equal(h.members.length,3);assert.equal(h.members.find(m=>m.slot===1).input.punch,true);assert.equal(JSON.stringify(h).includes(guest.token),false);
+ await request({op:'sync',input:{left:true,punch:true,grab:true}},guest);const h=await request({op:'sync'},host);assert.equal(h.members.length,3);assert.equal(h.members.find(m=>m.slot===1).input.punch,true);assert.equal(h.members.find(m=>m.slot===1).input.grab,true,'grab input relayed');assert.equal(JSON.stringify(h).includes(guest.token),false);
  const state={fighters:[{hero:'hiro',hp:92},{hero:'marica',hp:80}],tick:15,phase:'fight'};await request({op:'sync',state},host);const v=await request({op:'sync'},viewer);assert.deepEqual(v.state,state,'viewer sees the host state');assert.equal(v.members.some(m=>'input' in m),false);
  await request({op:'sync',id:guest.id},{...guest,token:host.token},401);
  await request({op:'leave'},guest);guest=null;const next=await request({op:'join',name:'QA Rival replacement',code:host.code});guest=next;assert.equal(next.slot,1);
@@ -47,3 +47,13 @@ console.log('Roster checks passed: Lobão, Ratão, Bale, Véio and Catlaca selec
  try{const peek=await request({op:'peek',code:h.code});assert.equal(peek.roster,'rockstar');assert.equal(peek.hostHero,'rogerio-skylab');await request({op:'join',name:'QA turma',code:h.code,hero:'hiro'},null,409)}finally{await request({op:'leave'},h)}
 }
 console.log('Rock star room checks passed: roster reported by peek, other roster rejected, rock star rival admitted, boss hosts a rock star room.');
+
+{
+ // Public rooms waiting for a rival are listed; private ones and full ones are not.
+ const pub=await request({op:'create',name:'QA public host',hero:'lobao'});const priv=await request({op:'create',name:'QA private host',hero:'veio',public:false});let g;
+ try{
+  let list=await request({op:'list'});assert.ok(list.rooms.some(r=>r.code===pub.code&&r.hostName==='QA public host'&&r.hostHero==='lobao'&&r.roster==='turma'),'public room listed');assert.ok(!list.rooms.some(r=>r.code===priv.code),'private room hidden');
+  g=await request({op:'join',name:'QA filler',code:pub.code,hero:'hiro'});list=await request({op:'list'});assert.ok(!list.rooms.some(r=>r.code===pub.code),'full room leaves the list');
+ }finally{await request({op:'leave'},pub);await request({op:'leave'},priv)}
+}
+console.log('Room list checks passed: public rooms listed, private and full rooms hidden.');

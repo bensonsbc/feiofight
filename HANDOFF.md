@@ -370,6 +370,45 @@ Fluxo para uma folha nova no padrão: colocar o PNG em `art/source/<elenco>/`, r
 
 Validação: `tests/roster.test.ts` confere os dois elencos, identificadores únicos, catálogo completo, oponente padrão do mesmo elenco, atlas com 7 × 4 quadros e projétil para cada rock star, e uma luta de rock stars com o dano-base do especial. O teste de salas cobre a recusa de lutador de outro elenco.
 
+## 15. Rodada de melhorias de jogo (16/09/2026)
+
+Todas as sugestões da revisão de produto foram implementadas de uma vez, exceto o chefe da turma, que depende de uma folha nova.
+
+### Jogabilidade (`lib/game.ts`, `lib/characters.ts`)
+
+- **Atributos por lutador.** `statsOf(hero)` devolve `hp` (barra de vida, 90 a 120), `speed` (andar), `power` (multiplica todo dano causado) e `height` (escala do sprite e da caixa que um projétil acerta). Pesados como Lemmy, Sergey e Lobão têm mais vida e soco, e andam devagar; leves como Sid, Ratão e Iggy o contrário. O HUD mostra a vida em proporção de `maxHp`.
+- **Especiais diferentes.** `shotOf(hero)` define velocidade, altura de voo e dano-base de cada projétil. Rasteiros (Marica, Elvis, Jim, Iggy) passam por baixo de quem pula; altos (Véio, Catlaca, Lennon, Keith, Ozzy, Joey) passam por cima de quem abaixa; pesados (Sergey, Bale, Lemmy) são lentos e doem mais; leves (Sid, Ratão) são velozes e fracos. O dano final é `shot.damage × power`.
+- **Combos.** Um soco ou chute que acerta pode ser cancelado no próximo golpe por um novo toque (a borda do botão, não o botão segurado), até três golpes; o terceiro é pesado e ganha bônus. Um golpe que erra não encadeia. O contador "N HITS" aparece sobre o atacante.
+- **Golpe aéreo.** Soco e chute funcionam no ar, com caixa vertical: a figura acerta na descida, inclusive em quem está abaixado. Pousar no meio do golpe encurta a recuperação.
+- **Agarrão (tecla U, botão AGARRÃO).** Ignora a defesa, só pega rival no chão a um braço de distância, e o arremessa em arco. Errar deixa quem agarrou travado mais tempo. Fecha o pedra-papel-tesoura contra quem só defende; a IA usa isso (`grab` em `levelFor`).
+- **Impacto.** Chutes, arremessos, projéteis e o terceiro golpe de combo tremem a tela (`shake`); o especial que acerta dá um flash branco; o nocaute congela a ação por 0,42 s (`freeze`) e lança o perdedor para longe, que cai de costas (ação `down`, desenhada com o quadro de pulo deitado). Tudo isso é estado da simulação, então espectadores veem o mesmo.
+- **Eventos.** `state.events` lista o que aconteceu no último passo (soco, chute, acerto, defesa, especial, pulo, arremesso, K.O., round, luta, fim). A página os usa para som; o estado enviado pela rede os carrega também.
+- A entrada ganhou `grab`; a API limpa esse campo como os demais.
+
+### Arcade (`app/page.tsx`)
+
+- **Tela VS** com os retratos dos dois antes de cada luta, por 2,4 s, e o número da luta ou "CHEFE".
+- **Progresso salvo** em `localStorage` (`arcade:progress:<elenco>`): etapa a retomar, derrotas, dificuldade e tempo acumulado. O botão CONTINUAR aparece no lobby; sair com DESISTIR mantém o progresso; começar outra corrida sobrescreve.
+- **Recordes** (`arcade:records:<elenco>`): ao vencer o chefe, a corrida entra na tabela ordenada por derrotas e tempo; as três melhores aparecem no lobby.
+- **Final por lutador:** retrato e uma frase própria (`ending` no catálogo), com o resumo da corrida.
+- **Dificuldade** fácil, normal e difícil (`levelFor(stage, boss, difficulty)`): fácil desloca a curva duas etapas para baixo e reage mais devagar; difícil começa onde o normal termina. A escolha fica salva.
+
+### Apresentação
+
+- **Som sintetizado** (`lib/audio.ts`): nenhum arquivo de áudio; cada evento vira um efeito curto de osciladores e ruído filtrado, e a derrota tem um gemido (dente de serra com vibrato por um filtro passa-banda). A **música** é um loop de quatro compassos (baixo, bumbo, chimbal e um solo) com padrão e andamento próprios por elenco, agendada com antecedência para não engasgar. Liga no botão SOM, que também exige o gesto do usuário que o navegador pede para áudio.
+- **Sombra** que encolhe e clareia com a altura do pulo; **altura** por lutador (Sergey 1,05, Bale 0,78).
+- **Retratos** reduzidos por `scripts/make-portraits.py` (320 × 480 e miniaturas 96 × 144, paleta com dithering, cerca de 2,2 MB no total, carregados sob demanda): miniaturas nos botões do lobby, retratos na tela VS, no final e na lista de salas. Os originais de mais de 1 MB continuam em `public/assets` por enquanto, mas nada os carrega.
+
+### Online
+
+- **Interpolação para quem recebe o estado.** Convidado e espectadores desenham um instantâneo atrás, deslizando lutadores e projéteis entre os dois últimos estados recebidos (`interpolate` na página), o que elimina o serrilhado quando a rede oscila. A lógica de HUD continua no estado mais novo.
+- **Reconexão.** A sessão fica em `localStorage` (`session:<código>`) por 15 minutos; abrir o link da sala de novo valida o token com `sync` e reentra sem ocupar outra vaga. O criador pode voltar a qualquer momento antes de a sala expirar; o convidado, enquanto seu registro não for limpo por outro `join` (30 s sem sinal).
+- **Salas abertas.** `op: "list"` devolve salas públicas com o criador presente e sem rival, mais recentes primeiro. O lobby de duelo mostra a lista e a atualiza a cada 6 s; clicar preenche o código. A opção "Listar a sala" ao criar grava `rooms.public` (migração `drizzle/0001_public_rooms.sql`, aplicada no D1 remoto e no local).
+
+### Ferramentas e verificação
+
+`tests/game.test.ts` cobre os especiais rasteiros e altos, combos (inclusive que segurar o botão não encadeia), golpe aéreo, agarrão (acerta através da defesa, erra longe, não pega quem pula), atributos, congelamento e queda do nocaute e o especial de todos os elencos. `tests/ai.test.ts` cobre dificuldades e o agarrão contra quem só defende. `tests/rooms.test.mjs` cobre a lista de salas públicas e o campo `grab`. O chefe da turma continua pendente: o pipeline de folhas está pronto para receber a arte.
+
 ## 14. Cenário da sétima versão (16/09/2026)
 
 O plano de fundo da arena foi trocado por uma interpretação em pixel art da fotografia da entrada da ETE Lauro Gomes fornecida pelo proprietário. O arquivo ativo é `public/assets/arena.png`. A arte anterior, da esquina, continua disponível em `public/assets/arena-esquina-original.png`, preservada byte a byte a partir da sexta versão. A legenda abaixo da arena foi atualizada em `app/page.tsx`. O renderizador continua carregando `arena.png`; nenhuma regra de combate, posição dos lutadores ou colisão depende do conteúdo da imagem. Para restaurar o cenário anterior, substitua `arena.png` pela cópia, atualize a legenda e publique uma nova versão.

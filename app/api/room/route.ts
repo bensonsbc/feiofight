@@ -6,7 +6,7 @@ type Row={id:string;room:string;secret:string;name:string;slot:number|null;hero:
 type Room={code:string;host:string;expires:number;state:string|null;updated:number};
 const parse=(s:string|null)=>{try{return s?JSON.parse(s):null}catch{return null}};
 async function digest(s:string){return [...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))].map(v=>v.toString(16).padStart(2,"0")).join("")}
-function cleanInput(v:any){const o:Record<string,boolean>={};for(const k of ["left","right","jump","down","punch","kick","block","special"])o[k]=v?.[k]===true;return JSON.stringify(o)}
+function cleanInput(v:any){const o:Record<string,boolean>={};for(const k of ["left","right","jump","down","punch","kick","block","special","grab"])o[k]=v?.[k]===true;return JSON.stringify(o)}
 export async function POST(req:Request){
  try{
   if(req.headers.get("origin")&&new URL(req.headers.get("origin")!).host!==new URL(req.url).host)return json({error:"Origem inválida."},403);
@@ -20,7 +20,7 @@ export async function POST(req:Request){
    const id=crypto.randomUUID(),token=crypto.randomUUID()+crypto.randomUUID(),secret=await digest(token);
    if(op==="create"){
     const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";const code=[...crypto.getRandomValues(new Uint8Array(8))].map(n=>alphabet[n%32]).join("");
-    await db.batch([db.prepare("DELETE FROM rooms WHERE expires < ?").bind(now),db.prepare("INSERT INTO rooms(code,host,created,expires,updated) VALUES(?,?,?,?,?)").bind(code,id,now,now+14400000,now),db.prepare("INSERT INTO members(id,room,secret,name,slot,hero,seen) VALUES(?,?,?,?,0,?,?)").bind(id,code,secret,name,hero,now)]);
+    await db.batch([db.prepare("DELETE FROM rooms WHERE expires < ?").bind(now),db.prepare("INSERT INTO rooms(code,host,created,expires,updated,public) VALUES(?,?,?,?,?,?)").bind(code,id,now,now+14400000,now,b.public===false?0:1),db.prepare("INSERT INTO members(id,room,secret,name,slot,hero,seen) VALUES(?,?,?,?,0,?,?)").bind(id,code,secret,name,hero,now)]);
     return json({code,id,token,slot:0,hero,name,host:id,hostHero:hero});
    }
    const code=String(b.code||"").toUpperCase();if(!/^[A-Z2-9]{8}$/.test(code))return json({error:"Use o código de 8 caracteres da sala."},400);
@@ -44,6 +44,11 @@ export async function POST(req:Request){
     if(!insert.meta.changes)return json({error:"A sala atingiu o limite de 20 espectadores."},409);
    }catch(e){if(String(e).includes("UNIQUE"))return json({error:"Os dois lugares já estão ocupados. Entre para assistir."},409);throw e}
    return json({code,id,token,slot,hero:assigned,name,host:room.host,hostHero});
+  }
+  // Public rooms still waiting for a rival, newest first, for the lobby list.
+  if(op==="list"){
+   const rows=await db.prepare("SELECT r.code AS code,r.created AS created,m.name AS name,m.hero AS hero,(SELECT COUNT(*) FROM members s WHERE s.room=r.code AND s.slot IS NULL AND s.seen>?) AS spectators FROM rooms r JOIN members m ON m.id=r.host WHERE r.public=1 AND r.expires>? AND m.seen>? AND NOT EXISTS(SELECT 1 FROM members g WHERE g.room=r.code AND g.slot=1 AND g.seen>?) ORDER BY r.created DESC LIMIT 20").bind(now-30000,now,now-30000,now-30000).all<{code:string;created:number;name:string;hero:string;spectators:number}>();
+   return json({rooms:rows.results.map(r=>{const hostHero=isHero(r.hero)?r.hero:"marica";return {code:r.code,hostName:r.name,hostHero,roster:rosterOf(hostHero),spectators:r.spectators,created:r.created}})});
   }
   // Lobby lookup for an invite: who created the room, which hero they took, whether the rival seat is free.
   if(op==="peek"){
