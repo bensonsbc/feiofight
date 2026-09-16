@@ -1,0 +1,31 @@
+import {emptyInput,type Input,type State,type Hero} from "./game";
+export type Session={code:string;id:string;token:string;slot:number|null;hero:Hero|null;name:string;host:string};
+export type Member={id:string;name:string;slot:number|null;hero:Hero|null;seen:number;input?:Input;answer?:RTCSessionDescriptionInit};
+export async function roomRequest(body:unknown,token?:string){const r=await fetch("/api/room",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(7000)});const d:any=await r.json();if(!r.ok)throw new Error(d.error||"Falha na conexão.");return d}
+type Peer={pc:RTCPeerConnection;channel?:RTCDataChannel;answer?:string;started:number};
+export class RoomNetwork{
+ session:Session; peers=new Map<string,Peer>(); members:Member[]=[]; state:State|null=null;input:Input=emptyInput();remoteInput:Input=emptyInput();remoteAt=0;latestTick=-1;lastDirect=0;stopped=false;timer:ReturnType<typeof setTimeout>|null=null;inflight=false;error="";failures=0;latency=0;onUpdate:()=>void;onState:(s:State)=>void;onDisconnect:()=>void;lastOffer="";syncCount=0;
+ constructor(session:Session,onUpdate:()=>void,onState:(s:State)=>void,onDisconnect:()=>void){this.session=session;this.onUpdate=onUpdate;this.onState=onState;this.onDisconnect=onDisconnect;this.poll()}
+ get direct(){if(this.session.slot===0)return [...this.peers.entries()].some(([id,p])=>this.members.find(m=>m.id===id)?.slot===1&&p.channel?.readyState==="open");return this.peers.get(this.session.host)?.channel?.readyState==="open"}
+ get opponentPresent(){return this.members.some(m=>m.slot===1&&Date.now()-m.seen<5000)}
+ sendInput(input:Input){this.input=input;if(this.session.slot!==1)return;const ch=this.peers.get(this.session.host)?.channel;if(ch?.readyState==="open"&&ch.bufferedAmount<12000)ch.send(JSON.stringify({type:"input",input}))}
+ broadcast(s:State){this.state=s;const msg=JSON.stringify({type:"state",state:s});for(const p of this.peers.values())if(p.channel?.readyState==="open"&&p.channel.bufferedAmount<20000)p.channel.send(msg)}
+ private wire(id:string,p:Peer,ch:RTCDataChannel){p.channel=ch;ch.onopen=()=>this.onUpdate();ch.onmessage=e=>{try{const m=JSON.parse(e.data);if(this.session.slot===0){const member=this.members.find(v=>v.id===id);if(member?.slot===1&&m.type==="input"){const clean=emptyInput();for(const k of Object.keys(clean) as (keyof Input)[])clean[k]=m.input?.[k]===true;this.remoteInput=clean;this.remoteAt=Date.now()}}else if(id===this.session.host&&m.type==="state"&&m.state?.tick>this.latestTick){this.latestTick=m.state.tick;this.lastDirect=Date.now();this.onState(m.state)}}catch{}};ch.onclose=()=>this.onUpdate()}
+ private makePeer(id:string){const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.cloudflare.com:3478"},{urls:"stun:stun.l.google.com:19302"}]});const p:Peer={pc,started:Date.now()};this.peers.set(id,p);pc.ondatachannel=e=>this.wire(id,p,e.channel);pc.onconnectionstatechange=()=>this.onUpdate();return p}
+ private async gathered(pc:RTCPeerConnection){if(pc.iceGatheringState==="complete")return;await new Promise<void>(resolve=>{const t=setTimeout(done,1600);function done(){clearTimeout(t);pc.removeEventListener("icegatheringstatechange",check);resolve()}function check(){if(pc.iceGatheringState==="complete")done()}pc.addEventListener("icegatheringstatechange",check)})}
+ private async offer(id:string){const p=this.makePeer(id);this.wire(id,p,p.pc.createDataChannel("arena",{ordered:false,maxRetransmits:0}));await p.pc.setLocalDescription(await p.pc.createOffer());await this.gathered(p.pc);if(this.stopped)return;await roomRequest({op:"signal",id:this.session.id,target:id,sdp:p.pc.localDescription},this.session.token)}
+ private async answer(offer:RTCSessionDescriptionInit){const key=offer.sdp||"";if(key===this.lastOffer)return;this.lastOffer=key;this.peers.get(this.session.host)?.pc.close();const p=this.makePeer(this.session.host);await p.pc.setRemoteDescription(offer);await p.pc.setLocalDescription(await p.pc.createAnswer());await this.gathered(p.pc);if(this.stopped)return;await roomRequest({op:"signal",id:this.session.id,sdp:p.pc.localDescription},this.session.token)}
+ async poll(){if(this.stopped||this.inflight)return;this.inflight=true;const start=performance.now();try{
+  const s=this.session;const b:any={op:"sync",id:s.id};if(s.slot===0&&this.state)b.state=this.state;if(s.slot===1)b.input=this.input;
+  const d=await roomRequest(b,s.token);if(this.stopped)return;this.latency=Math.round(performance.now()-start);this.members=d.members;this.failures=0;this.error="";
+  if(!this.members.some(m=>m.id===s.host)){this.error="O criador da sala desconectou. A partida está pausada.";this.onDisconnect()}
+  if(s.slot===0){const guest=this.members.find(m=>m.slot===1);if(guest?.input&&(!this.direct||Date.now()-this.remoteAt>700)){this.remoteInput=guest.input;this.remoteAt=Date.now()}
+   for(const m of this.members){if(m.id===s.id)continue;let p=this.peers.get(m.id);if(!p){this.offer(m.id).catch(()=>{});continue}if(m.answer&&p.pc.signalingState==="have-local-offer"&&p.answer!==m.answer.sdp){p.answer=m.answer.sdp;p.pc.setRemoteDescription(m.answer).catch(()=>{})}}
+   for(const [id,p] of this.peers)if(!this.members.some(m=>m.id===id)){p.pc.close();this.peers.delete(id)}
+  }else{if(d.offer)this.answer(d.offer).catch(()=>{});if(d.state&&Date.now()-this.lastDirect>350&&d.state.tick>=this.latestTick){this.latestTick=d.state.tick;this.onState(d.state)}}
+  this.onUpdate();
+ }catch(e){this.failures++;this.error=e instanceof Error?e.message:"Conexão interrompida.";if(this.failures>3)this.onDisconnect();this.onUpdate()}finally{this.inflight=false;if(!this.stopped)this.timer=setTimeout(()=>this.poll(),this.failures?1500:(this.direct&&(this.session.slot!==0||this.members.every(m=>m.id===this.session.id||this.peers.get(m.id)?.channel?.readyState==="open")))?1000:this.session.slot===null?220:110)}}
+ close(){this.stopped=true;if(this.timer)clearTimeout(this.timer);for(const p of this.peers.values())p.pc.close();roomRequest({op:"leave",id:this.session.id},this.session.token).catch(()=>{})}
+}
+
+
